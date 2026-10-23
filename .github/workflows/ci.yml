@@ -62,7 +62,7 @@ jobs:
       - name: Build và chạy
         run: docker compose up -d --build
       - name: Backend trả lời
-        run: curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-connrefused http://localhost:4000
+        run: curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://localhost:4000
       - name: Log khi lỗi
         if: failure()
         run: docker compose logs
