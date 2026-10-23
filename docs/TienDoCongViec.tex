@@ -1,0 +1,124 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper]{article}
+
+% ==================== CẤU HÌNH TRANG ====================
+\usepackage[a4paper,margin=2cm]{geometry}
+
+% ==================== TIẾNG VIỆT VÀ FONT ====================
+% Biên dịch bằng XeLaTeX hoặc LuaLaTeX
+\usepackage{fontspec}
+\usepackage[vietnamese,provide=*]{babel}
+\babelfont{rm}{Noto Sans}
+
+% ==================== BẢNG VÀ MÀU SẮC ====================
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage{array}
+
+% Căn trái nội dung trong các cột X
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Tắt lùi đầu dòng
+\setlength{\parindent}{0pt}
+
+% Khoảng cách giữa các hàng
+\renewcommand{\arraystretch}{1.4}
+
+% ==================== LỆNH TẠO BẢNG TASK TRỐNG ====================
+\newcommand{\TaskTable}[1]{%
+    \subsection*{Task #1: \underline{\hspace{8cm}}}
+    \begin{tabularx}{\textwidth}
+        {|c|p{3.2cm}|Y|Y|}
+        \hline
+        \rowcolor{gray!20}
+        \textbf{STT} &
+        \textbf{Thời gian} &
+        \textbf{Nội dung} &
+        \textbf{Công việc} \\
+        \hline
+        1 & & & \\[1.2cm]
+        \hline
+        2 & & & \\[1.2cm]
+        \hline
+        3 & & & \\[1.2cm]
+        \hline
+        4 & & & \\[1.2cm]
+        \hline
+    \end{tabularx}
+    \vspace{0.8cm}
+}
+
+\begin{document}
+
+% ==================== TIÊU ĐỀ ====================
+\begin{center}
+    \Large\textbf{KHUNG QUẢN LÝ 10 NHIỆM VỤ (TASKS)}
+\end{center}
+
+\vspace{0.5cm}
+
+% ==================== TASK 01 ====================
+\subsection*{Task 01: Khảo sát yêu cầu và thiết lập môi trường dự án}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} &
+    \textbf{Thời gian} &
+    \textbf{Nội dung} &
+    \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 &
+    21/10/2026&
+    Họp phân công taks 1&
+    \textbf - Long tạo repo và setup repo \newline \\
+    \hline
+
+    2 &
+    21-22/10/2026&
+    Thực hiện setup repo và backend&
+
+    \textbf  - Long tạo github, môi trường docker, setup bảo vệ nhánh main + setup cho backend\\
+    \hline
+
+    3 &
+    21/10/2026 &
+    Thực hiện setup frontend&
+
+    \textbf - Tài setup cho frontnend \\
+    \hline
+
+    4 &
+    &
+    &
+
+    \textbf{Phân công:} [Điền người thực hiện...] \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+% ==================== TASK 02 - 04 ====================
+\TaskTable{02}
+\clearpage
+
+\TaskTable{03}
+\TaskTable{04}
+\clearpage
+
+% ==================== TASK 05 - 06 ====================
+\TaskTable{05}
+\TaskTable{06}
+\clearpage
+
+% ==================== TASK 07 - 08 ====================
+\TaskTable{07}
+\TaskTable{08}
+\clearpage
+
+% ==================== TASK 09 - 10 ====================
+\TaskTable{09}
+\TaskTable{10}
+
+\end{document}
