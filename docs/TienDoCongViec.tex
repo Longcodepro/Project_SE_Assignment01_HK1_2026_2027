@@ -1,40 +1,31 @@
-% !TEX program = xelatex
-\documentclass[12pt,a4paper]{article}
 
-% ==================== CẤU HÌNH TRANG ====================
-\usepackage[a4paper,margin=2cm]{geometry}
+\documentclass[12pt, a4paper]{article}
 
-% ==================== TIẾNG VIỆT VÀ FONT ====================
-% Biên dịch bằng XeLaTeX hoặc LuaLaTeX
+% Cài đặt lề trang
+\usepackage[a4paper, margin=2cm]{geometry}
+
+% Cài đặt ngôn ngữ tiếng Việt và font chữ
 \usepackage{fontspec}
-\usepackage[vietnamese,provide=*]{babel}
+\usepackage[vietnamese, bidi=basic, provide=*]{babel}
 \babelfont{rm}{Noto Sans}
 
-% ==================== BẢNG VÀ MÀU SẮC ====================
+% Cài đặt bảng và màu sắc
 \usepackage{tabularx}
 \usepackage[table]{xcolor}
-\usepackage{array}
-
-% Căn trái nội dung trong các cột X
-\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 % Tắt lùi đầu dòng
 \setlength{\parindent}{0pt}
 
-% Khoảng cách giữa các hàng
-\renewcommand{\arraystretch}{1.4}
+% Chiều cao các hàng trong bảng
+\renewcommand{\arraystretch}{2.2}
 
-% ==================== LỆNH TẠO BẢNG TASK TRỐNG ====================
+% Định nghĩa câu lệnh tạo khung cho 1 Task
 \newcommand{\TaskTable}[1]{%
-    \subsection*{Task #1: \underline{\hspace{8cm}}}
-    \begin{tabularx}{\textwidth}
-        {|c|p{3.2cm}|Y|Y|}
+    \subsection*{Task #1: \underline{\hspace{10cm}}} % Tiêu đề Task có chừa chỗ viết tên Task
+    \begin{tabularx}{\textwidth}{| c | p{3.2cm} | X | X |}
         \hline
         \rowcolor{gray!20}
-        \textbf{STT} &
-        \textbf{Thời gian} &
-        \textbf{Nội dung} &
-        \textbf{Công việc} \\
+        \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc} \\
         \hline
         1 & & & \\[1.2cm]
         \hline
@@ -50,74 +41,46 @@
 
 \begin{document}
 
-% ==================== TIÊU ĐỀ ====================
 \begin{center}
     \Large\textbf{KHUNG QUẢN LÝ 10 NHIỆM VỤ (TASKS)}
 \end{center}
 
 \vspace{0.5cm}
 
-% ==================== TASK 01 ====================
+% ==================== TASK 1 ====================
+\renewcommand{\arraystretch}{1.4} % Tối ưu giãn dòng cho bảng có chữ
 \subsection*{Task 01: Khảo sát yêu cầu và thiết lập môi trường dự án}
-
-\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+\begin{tabularx}{\textwidth}{| c | p{3.2cm} | X | X |}
     \hline
     \rowcolor{gray!20}
-    \textbf{STT} &
-    \textbf{Thời gian} &
-    \textbf{Nội dung} &
-    \textbf{Công việc \& Phân công} \\
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
     \hline
-
-    1 &
-    21/10/2026&
-    Họp phân công taks 1&
-    \textbf - Long tạo repo và setup repo \newline \\
+    1 & 21/10/2026 - 23/10/2026 & Đọc hiểu tài liệu yêu cầu (Requirement Analysis) & Nghiên cứu đề bài Assignment 1, xác định phạm vi hệ thống và các chức năng chính. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
     \hline
-
-    2 &
-    21-22/10/2026&
-    Thực hiện setup repo và backend&
-
-    \textbf  - Long tạo github, môi trường docker, setup bảo vệ nhánh main + setup cho backend\\
+    2 & 24/10/2026 - 26/10/2026 & Khởi tạo dự án và quy chuẩn làm việc & Tạo Git repository, thống nhất luồng làm việc Git branching và quy ước commit. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
     \hline
-
-    3 &
-    21/10/2026 &
-    Thực hiện setup frontend&
-
-    \textbf - Tài setup cho frontnend \\
+    3 & 27/10/2026 - 29/10/2026 & Họp phân công công việc & Phân chia vai trò, xác định rõ trách nhiệm của từng thành viên cho các Sprint tiếp theo. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
     \hline
-
-    4 &
-    &
-    &
-
-    \textbf{Phân công:} [Điền người thực hiện...] \\
+    4 & 30/10/2026 - 01/11/2026 & Tổng hợp và đánh giá Task 1 & Viết báo cáo tiến độ, hoàn thiện kế hoạch chi tiết gửi giảng viên. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
     \hline
 \end{tabularx}
-
 \vspace{0.8cm}
-
-% ==================== TASK 02 - 04 ====================
+\renewcommand{\arraystretch}{2.2} % Khôi phục độ giãn dòng cho các bảng trống tiếp theo
 \TaskTable{02}
-\clearpage
+\clearpage % Sang trang mới cho dễ nhìn
 
 \TaskTable{03}
 \TaskTable{04}
 \clearpage
 
-% ==================== TASK 05 - 06 ====================
 \TaskTable{05}
 \TaskTable{06}
 \clearpage
 
-% ==================== TASK 07 - 08 ====================
 \TaskTable{07}
 \TaskTable{08}
 \clearpage
 
-% ==================== TASK 09 - 10 ====================
 \TaskTable{09}
 \TaskTable{10}
 
