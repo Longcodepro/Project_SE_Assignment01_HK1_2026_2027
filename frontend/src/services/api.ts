@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Product } from "@/types";
+import { Product, Order } from "@/types";
 
 const API_URL=process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 export const apiService={
@@ -39,6 +39,71 @@ export const apiService={
             status: paymentRes.data.status, //'PAID' hoặc 'PAYMENT_FAILED'
             total: orderRes.data.total,
         };
+    },
+
+    //endpoint lịch sử đơn hàng
+    getMyOrders: async (): Promise<Order[]> => {
+        try{
+            const res = await axios.get (`${API_URL}/orders/me`);
+            return res.data;
+        }catch (error) {
+            console.warn("Backend chưa có /order/me, sử dụng dữ liệu giả lập", error);
+            //dữ liệu giả để chạy test
+            return[
+                {
+                    id: "ord_1042",
+                    status: "PREPARING",
+                    total: 75000,
+                    createdAt: new Date(Date.now()-5*60000).toISOString(),
+                    items: [
+                        {
+                            productId: "1",
+                            product: { id: 1, name: "Cà phê sữa đá Tây Nguyên", price: 29000, imageUrl: "", stock: 10 },
+                            size: "M",
+                            quantity: 1,
+                            lineTotal: 35000
+                        },
+                        {
+                            productId: "3",
+                            product: { id: 3, name: "Trà sữa Ô Long nướng", price: 35000, imageUrl: "", stock: 10 },
+                            size: "L",
+                            quantity: 1,
+                            lineTotal: 40000
+                        },
+                    ]
+                },
+                {
+                    id: "ord_1038",
+                    status: "READY",
+                    total: 29000,
+                    createdAt: new Date(Date.now() - 25 * 60000).toISOString(),
+                    items: [
+                        {
+                            productId: "2",
+                            product: { id: 2, name: "Bạc xỉu truyền thống", price: 29000, imageUrl: "", stock: 10 },
+                            size: "S",
+                            quantity: 1,
+                            lineTotal: 29000
+                        }
+                    ]
+                },
+                {
+                    id: "ord_0995",
+                    status: "COMPLETED",
+                    total: 64000,
+                    createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),
+                    items: [
+                        {
+                            productId: "1",
+                            product: { id: 1, name: "Cà phê sữa đá Tây Nguyên", price: 29000, imageUrl: "", stock: 10 },
+                            size: "M",
+                            quantity: 2,
+                            lineTotal: 64000
+                        }
+                    ]
+                }
+            ];
+        }
     },
     
 };
