@@ -76,10 +76,22 @@ describe('POST /payments', () => {
     await app.close();
   });
 
+  it('thử lại mà vẫn lỗi: ghi thêm lần thanh toán FAILED, không đổi trạng thái đơn', async () => {
+    const { app, http, orderUpdateMany, paymentCreate } = await setup({ ...pending, status: 'PAYMENT_FAILED' });
+
+    const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'CARD', cardNumber: '4111111111110000' }).expect(201);
+
+    expect(res.body.status).toBe('PAYMENT_FAILED');
+    expect(orderUpdateMany).not.toHaveBeenCalled();
+    expect(paymentCreate).toHaveBeenCalledTimes(1);
+    await app.close();
+  });
+
   it('thử lại được khi đơn đang PAYMENT_FAILED', async () => {
-    const { app, http } = await setup({ ...pending, status: 'PAYMENT_FAILED' });
+    const { app, http, orderUpdateMany } = await setup({ ...pending, status: 'PAYMENT_FAILED' });
     const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'WALLET' }).expect(201);
     expect(res.body.status).toBe('PAID');
+    expect(orderUpdateMany.mock.calls[0][0].where).toEqual({ id: 'ord_1', status: 'PAYMENT_FAILED' });
     await app.close();
   });
 
