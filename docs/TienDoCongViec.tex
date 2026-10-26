@@ -196,7 +196,29 @@
 
 \vspace{0.8cm}
 
-\TaskTable{05}
+\subsection*{Task 05: Giỏ hàng (Next.js + Zustand)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 & Store giỏ hàng &
+    - Tài viết \texttt{useCartStore} bằng Zustand, lưu vào \texttt{localStorage} (persist); phân biệt món theo mã \texttt{productId-size-toppings}, tăng giảm số lượng (tối thiểu 1 ly), xóa từng món và xóa cả giỏ \\
+    \hline
+
+    2 & 26/10/2026 & Trang giỏ hàng và Navbar &
+    - Tài làm trang \texttt{/cart}: danh sách món, đơn giá kèm topping, tổng tiền, trạng thái giỏ rỗng có nút quay về Menu; Navbar có huy hiệu đếm số ly, dùng \texttt{useSyncExternalStore} để tránh lỗi hydration \\
+    \hline
+
+    3 & 26/10/2026 & Pull Request \#34 &
+    - Tài mở Pull Request \#34 (22:03), CI chạy thành công (3/3), merge vào \texttt{main} lúc 23:05; issue \#7 tự đóng. Pull Request chưa có review \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
 
 \subsection*{Task 06: API tạo đơn hàng (POST /orders)}
 
@@ -257,10 +279,8 @@
     \rowcolor{gray!20}
     \textbf{Tình hình Sprint 2 (cập nhật 26/10/2026)} \\
     \hline
-    - Đã xong: Task 06 (issue \#8) và Task 07 (issue \#9), đã merge qua Pull Request \#31 và \#32. \newline
-    - Task 04 (issue \#6): Pull Request \#30 đã merge nhưng issue vẫn đang mở. \newline
-    - Task 05 (issue \#7, giỏ hàng): chưa có Pull Request trên GitHub. \newline
-    - Kết luận: Sprint 2 chưa hoàn thành đầy đủ. \newline
+    - Đã xong: Task 04 (issue \#6, Pull Request \#30), Task 05 (issue \#7, Pull Request \#34), Task 06 (issue \#8, Pull Request \#31) và Task 07 (issue \#9, Pull Request \#32), đều đã merge vào \texttt{main}, bốn issue đã đóng. \newline
+    - Kết luận: Sprint 2 đã hoàn thành. \newline
     - Phần backend của Sprint 3 (issue \#10, \#12, \#14 đến \#17: thanh toán, lịch sử đơn, máy trạng thái đơn hàng, chống gửi trùng, khóa lạc quan, tích điểm) đã viết trên các nhánh cục bộ, chưa tạo Pull Request nên chưa tính là hoàn thành. \\
     \hline
 \end{tabularx}
