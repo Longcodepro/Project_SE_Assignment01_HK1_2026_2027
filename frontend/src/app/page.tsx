@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, Coffee, Sparkles, ShieldCheck, Zap } from 'lucide
 import Navbar from '@/components/Navbar';
 import ProductCard from '@/components/ProductCard';
 import ProductDetailModel from '@/components/ProductDetailModal';
+import { useCartStore } from '@/store/useCartStore';
 
 const MOCK_PRODUCTS: Product[] = [
   {
@@ -88,6 +89,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const addToCart = useCartStore((state)=>state.addToCart);
 
   useEffect(() => {
     async function fetchMenu() {
@@ -242,11 +244,16 @@ export default function MenuPage() {
 
         {/* POPUP CHI TIẾT SẢN PHẨM & TÙY CHỌN */}
         <ProductDetailModel
+          key={selectedProduct?.id}
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={(options) => {
-            console.log('Khách mua:', options);
-            alert(`Đã chọn: ${options.product.name} (Size ${options.size}) - Tổng: ${options.unitPrice.toLocaleString('vi-VN')}đ`);
+            addToCart(
+              options.product,
+              options.size,
+              options.toppings,
+              options.unitPrice
+            );
           }}
         />
       </main>
