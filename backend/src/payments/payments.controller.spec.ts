@@ -13,9 +13,11 @@ async function setup(order: object | null, updatedCount = 1) {
     .fn()
     .mockImplementation(({ data }) => Promise.resolve({ id: 11, ...data }));
   const orderFindFirst = vi.fn().mockResolvedValue(order);
+  const paymentFindUnique = vi.fn().mockResolvedValue(null);
   const tx = { order: { updateMany: orderUpdateMany }, payment: { create: paymentCreate } };
   const prisma = {
     order: { findFirst: orderFindFirst },
+    payment: { findUnique: paymentFindUnique },
     $transaction: (fn: (t: typeof tx) => unknown) => fn(tx),
   };
   const moduleRef = await Test.createTestingModule({
@@ -33,7 +35,7 @@ async function setup(order: object | null, updatedCount = 1) {
   const app = moduleRef.createNestApplication();
   app.useGlobalPipes(createValidationPipe());
   await app.init();
-  return { app, orderFindFirst, orderUpdateMany, paymentCreate, http: () => request(app.getHttpServer()) };
+  return { app, orderFindFirst, orderUpdateMany, paymentCreate, paymentFindUnique, http: () => request(app.getHttpServer()) };
 }
 
 const pending = { id: 'ord_1', userId: 7, status: 'PENDING', total: 84000 };
@@ -125,6 +127,71 @@ describe('POST /payments', () => {
   ])('400 khi %s', async (_n, body) => {
     const { app, http, orderFindFirst } = await setup(pending);
     await http().post('/payments').send(body).expect(400);
+    expect(orderFindFirst).not.toHaveBeenCalled();
+    await app.close();
+  });
+});
+
+describe('POST /payments với Idempotency-Key', () => {
+  const dto = { orderId: 'ord_1', method: 'WALLET' };
+  const old = { id: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'SUCCESS', failureReason: null };
+
+  it('lần đầu: lưu key cùng lần thanh toán', async () => {
+    const { app, http, paymentCreate, paymentFindUnique } = await setup(pending);
+    await http().post('/payments').set('Idempotency-Key', 'pay-1').send(dto).expect(201);
+    expect(paymentFindUnique.mock.calls[0][0].where).toEqual({
+      orderId_idempotencyKey: { orderId: 'ord_1', idempotencyKey: 'pay-1' },
+    });
+    expect(paymentCreate.mock.calls[0][0].data.idempotencyKey).toBe('pay-1');
+    await app.close();
+  });
+
+  it('gửi lại sau khi đơn đã PAID: trả kết quả cũ (không phải 409), không trừ tiền lại', async () => {
+    const { app, http, paymentCreate, paymentFindUnique } = await setup({ ...pending, status: 'PAID' });
+    paymentFindUnique.mockResolvedValue(old);
+
+    const res = await http().post('/payments').set('Idempotency-Key', 'pay-1').send(dto).expect(201);
+
+    expect(res.body).toEqual({ paymentId: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'PAID' });
+    expect(paymentCreate).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('gửi lại lần thất bại: vẫn trả PAYMENT_FAILED kèm lý do cũ', async () => {
+    const { app, http, paymentFindUnique } = await setup({ ...pending, status: 'PAYMENT_FAILED' });
+    paymentFindUnique.mockResolvedValue({ ...old, status: 'FAILED', failureReason: 'Thẻ bị từ chối' });
+    const res = await http().post('/payments').set('Idempotency-Key', 'pay-1').send(dto).expect(201);
+    expect(res.body).toMatchObject({ status: 'PAYMENT_FAILED', reason: 'Thẻ bị từ chối' });
+    await app.close();
+  });
+
+  it('hai yêu cầu cùng key đến cùng lúc (vi phạm unique): bên thua trả kết quả của bên thắng', async () => {
+    const { app, http, paymentCreate, paymentFindUnique } = await setup(pending);
+    paymentFindUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(old);
+    paymentCreate.mockRejectedValueOnce({ code: 'P2002' });
+    const res = await http().post('/payments').set('Idempotency-Key', 'pay-1').send(dto).expect(201);
+    expect(res.body.paymentId).toBe(11);
+    await app.close();
+  });
+
+  it('hai yêu cầu cùng key đến cùng lúc (đơn vừa bị đổi trạng thái): trả kết quả của bên thắng thay vì 409', async () => {
+    const { app, http, paymentFindUnique } = await setup(pending, 0);
+    paymentFindUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(old);
+    const res = await http().post('/payments').set('Idempotency-Key', 'pay-1').send(dto).expect(201);
+    expect(res.body.status).toBe('PAID');
+    await app.close();
+  });
+
+  it('không có header thì không tra cứu key', async () => {
+    const { app, http, paymentFindUnique } = await setup(pending);
+    await http().post('/payments').send(dto).expect(201);
+    expect(paymentFindUnique).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('400 khi key sai định dạng', async () => {
+    const { app, http, orderFindFirst } = await setup(pending);
+    await http().post('/payments').set('Idempotency-Key', 'x'.repeat(129)).send(dto).expect(400);
     expect(orderFindFirst).not.toHaveBeenCalled();
     await app.close();
   });

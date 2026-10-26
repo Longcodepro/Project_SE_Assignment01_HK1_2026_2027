@@ -32,6 +32,8 @@ model Order {
   id        String      @id
   userId    Int
   user      User        @relation(fields: [userId], references: [id])
+  // Client gửi lại cùng key thì trả đơn cũ thay vì tạo đơn mới
+  idempotencyKey String?
   status    OrderStatus @default(PENDING)
   // VND, tính ở server từ giá sản phẩm + size + topping
   total     Int
@@ -39,6 +41,7 @@ model Order {
   items     OrderItem[]
   payments  Payment[]
 
+  @@unique([userId, idempotencyKey])
   @@index([userId])
 }
 
@@ -86,7 +89,10 @@ model Payment {
   status    PaymentStatus
   // VND, lấy từ Order.total chứ không nhận từ client
   amount    Int
+  failureReason  String?
+  idempotencyKey String?
   createdAt DateTime      @default(now())
 
+  @@unique([orderId, idempotencyKey])
   @@index([orderId])
 }
