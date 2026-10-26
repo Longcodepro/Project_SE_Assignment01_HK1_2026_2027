@@ -2,6 +2,19 @@ import axios from "axios";
 import { Product, Order } from "@/types";
 
 const API_URL=process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+axios.interceptors.response.use(
+    (response)=>response,
+    (error)=>{
+        //nếu backend trả về lỗi 429
+        if(error.response?.status===429){
+            return Promise.reject(
+                new Error('Hệ thống đang bận do có quá nhiều yêu cầu. Vui lòng đợi 30 giây rồi thử lại nhé!')
+            );
+        }
+        return Promise.reject(error)
+    }
+)
 export const apiService={
     getProducts :async (): Promise<Product[]>=>{
         try{
@@ -47,6 +60,10 @@ export const apiService={
             const res = await axios.get (`${API_URL}/orders/me`);
             return res.data;
         }catch (error) {
+            if (axios.isAxiosError(error)&&error.response?.status===429)
+            {
+                throw error;
+            }
             console.warn("Backend chưa có /order/me, sử dụng dữ liệu giả lập", error);
             //dữ liệu giả để chạy test
             return[

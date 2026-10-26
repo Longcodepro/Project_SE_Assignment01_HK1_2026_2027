@@ -18,6 +18,7 @@ docker compose up --build
 | Postgres | localhost:4002         |
 
 Kiểm tra backend: `curl http://localhost:4000` → `Hello World!`
+Kiểm tra danh sách sản phẩm: `curl http://localhost:4000/products` (migration và seed tự chạy khi backend khởi động; khi chạy ngoài Docker: `cd backend && npx prisma migrate dev && npx prisma db seed`, cần `DATABASE_URL`).
 
 Dừng: `docker compose down` (thêm `-v` để xoá dữ liệu DB).
 

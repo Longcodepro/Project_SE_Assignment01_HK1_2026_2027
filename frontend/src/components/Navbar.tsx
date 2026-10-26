@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { Coffee, ShoppingBag, Clock } from 'lucide-react';
+import { Coffee, ShoppingBag, Clock, ReceiptText } from 'lucide-react';
 import { useCartStore } from "@/store/useCartStore";
 import { useSyncExternalStore } from "react";
 
@@ -49,25 +49,40 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Nút Giỏ Hàng góc phải */}
-                <Link
-                    href="/cart"
-                    className="relative flex items-center gap-2.5 bg-amber-900/80 hover:bg-amber-800 border border-amber-700/60 px-4 py-2 rounded-full transition active:scale-95 shadow-sm"
-                >
-                    <div className="relative">
-                        <ShoppingBag className="w-5 h-5 text-amber-300" />
+                {/* Cụm nút Đơn hàng & Giỏ hàng góc phải */}
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                    {/* NÚT LỊCH SỬ ĐƠN HÀNG (TASK 9) */}
+                    <Link
+                        href="/orders"
+                        className="flex items-center gap-2 bg-[#3E2314]/80 hover:bg-[#57341B] border border-[#57341B] hover:border-[#8C5835] text-[#FAF7F2] px-3.5 py-2 rounded-full transition active:scale-95 shadow-sm text-sm font-semibold"
+                        title="Xem lịch sử và tiến độ đơn hàng"
+                    >
+                        <ReceiptText className="w-4 h-4 text-[#D4A373]" />
+                        <span className="hidden sm:inline text-xs font-bold text-[#EED8C9]">
+                            Đơn hàng
+                        </span>
+                    </Link>
+                    
+                    {/* Nút Giỏ Hàng góc phải */}
+                    <Link
+                        href="/cart"
+                        className="relative flex items-center gap-2.5 bg-amber-900/80 hover:bg-amber-800 border border-amber-700/60 px-4 py-2 rounded-full transition active:scale-95 shadow-sm"
+                    >
+                        <div className="relative">
+                            <ShoppingBag className="w-5 h-5 text-amber-300" />
 
-                        {/* HUY HIỆU BADGE ĐỎ HIỆN SỐ LY NƯỚC (TIÊU CHÍ TASK 5) */}
-                        {isClient && totalItems > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-amber-950 animate-bounce">
-                                {totalItems}
-                            </span>
-                        )}
-                    </div>
-                    <span className="text-sm font-semibold text-amber-100 hidden sm:inline">
-                        Giỏ hàng
-                    </span>
-                </Link>
+                            {/* HUY HIỆU BADGE ĐỎ HIỆN SỐ LY NƯỚC (TIÊU CHÍ TASK 5) */}
+                            {isClient && totalItems > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[11px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-amber-950 animate-bounce">
+                                    {totalItems}
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-sm font-semibold text-amber-100 hidden sm:inline">
+                            Giỏ hàng
+                        </span>
+                    </Link>
+                </div>
             </div>
         </header>
     );

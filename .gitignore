@@ -151,4 +151,23 @@ vite.config.ts.timestamp-*
 # Tài liệu cá nhân
 MyDocs/
 
+# LaTeX: file sinh ra khi biên dịch (giữ lại file .tex và file .pdf nộp bài)
+*.aux
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+
 /MyDocs
+
+# Prisma client sinh ra bởi prisma generate
+/backend/src/generated
