@@ -35,7 +35,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT}
     ports:
-      - "${FRONTEND_PORT}:3000"
+      - "${FRONTEND_PORT}:4001"
     depends_on:
       - backend
 

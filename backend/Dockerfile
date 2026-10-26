@@ -11,5 +11,8 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+COPY --from=build /app/src/generated ./src/generated
 EXPOSE 4000
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/main"]

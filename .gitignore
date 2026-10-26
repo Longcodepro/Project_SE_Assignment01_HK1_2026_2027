@@ -168,3 +168,6 @@ MyDocs/
 *.vrb
 
 /MyDocs
+
+# Prisma client sinh ra bởi prisma generate
+/backend/src/generated
