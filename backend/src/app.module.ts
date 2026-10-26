@@ -3,6 +3,7 @@ import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { AuthModule } from './auth/auth.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { ProductsModule } from './products/products.module.js';
 
@@ -11,6 +12,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 @Module({
   imports: [
     PrismaModule,
+    AuthModule,
     ProductsModule,
     OrdersModule,
     // Distributed tracing, auto-correlated logs, request/job metrics, error

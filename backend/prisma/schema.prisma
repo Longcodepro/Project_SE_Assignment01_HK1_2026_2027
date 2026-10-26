@@ -30,11 +30,15 @@ enum OrderStatus {
 
 model Order {
   id        String      @id
+  userId    Int
+  user      User        @relation(fields: [userId], references: [id])
   status    OrderStatus @default(PENDING)
   // VND, tính ở server từ giá sản phẩm + size + topping
   total     Int
   createdAt DateTime    @default(now())
   items     OrderItem[]
+
+  @@index([userId])
 }
 
 model OrderItem {
@@ -50,4 +54,14 @@ model OrderItem {
   unitPrice Int
 
   @@index([orderId])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  // bcrypt hash, không bao giờ trả ra ngoài API
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  orders       Order[]
 }
