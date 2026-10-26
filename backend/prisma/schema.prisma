@@ -13,4 +13,41 @@ model Product {
   // VND, size S
   price    Int
   imageUrl String
+  orderItems OrderItem[]
+}
+
+enum Size {
+  S
+  M
+  L
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PAYMENT_FAILED
+}
+
+model Order {
+  id        String      @id
+  status    OrderStatus @default(PENDING)
+  // VND, tính ở server từ giá sản phẩm + size + topping
+  total     Int
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  size      Size
+  toppings  String[]
+  // VND, giá 1 ly đã gồm size + topping tại thời điểm đặt
+  unitPrice Int
+
+  @@index([orderId])
 }
