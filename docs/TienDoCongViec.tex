@@ -1,4 +1,4 @@
-
+% !TEX program = xelatex
 \documentclass[12pt, a4paper]{article}
 
 % Cài đặt lề trang
@@ -6,12 +6,16 @@
 
 % Cài đặt ngôn ngữ tiếng Việt và font chữ
 \usepackage{fontspec}
-\usepackage[vietnamese, bidi=basic, provide=*]{babel}
+\usepackage[vietnamese, provide=*]{babel}
 \babelfont{rm}{Noto Sans}
 
 % Cài đặt bảng và màu sắc
 \usepackage{tabularx}
 \usepackage[table]{xcolor}
+\usepackage{array}
+
+% Cột X căn trái
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 % Tắt lùi đầu dòng
 \setlength{\parindent}{0pt}
@@ -47,28 +51,33 @@
 
 \vspace{0.5cm}
 
-% ==================== TASK 1 ====================
+% ==================== TASK 01 ====================
 \renewcommand{\arraystretch}{1.4} % Tối ưu giãn dòng cho bảng có chữ
 \subsection*{Task 01: Khảo sát yêu cầu và thiết lập môi trường dự án}
-\begin{tabularx}{\textwidth}{| c | p{3.2cm} | X | X |}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
     \hline
     \rowcolor{gray!20}
     \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
     \hline
-    1 & 21/10/2026 - 23/10/2026 & Đọc hiểu tài liệu yêu cầu (Requirement Analysis) & Nghiên cứu đề bài Assignment 1, xác định phạm vi hệ thống và các chức năng chính. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
-    \hline
-    2 & 24/10/2026 - 26/10/2026 & Khởi tạo dự án và quy chuẩn làm việc & Tạo Git repository, thống nhất luồng làm việc Git branching và quy ước commit. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
-    \hline
-    3 & 27/10/2026 - 29/10/2026 & Họp phân công công việc & Phân chia vai trò, xác định rõ trách nhiệm của từng thành viên cho các Sprint tiếp theo. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
+
+    1 & 21/10/2026 & Họp phân công Task 1 và tạo repository &
+    - Long tạo repository trên GitHub (commit đầu tiên lúc 09:37) \\
     \hline
 
-    4 &
-    22/10/2026 &
-    Thảo luận phân chia công việc bằng các issue&
+    2 & 21/10/2026 & Thiết lập frontend &
+    - Tài khởi tạo Next.js, Dockerfile và file cấu hình môi trường; Pull Request \#1 merge lúc 13:51 \\
+    \hline
 
-    \textbf - Long thực hiện push các issue và setup CI cho các issue \\
+    3 & 21/10/2026 - 22/10/2026 & Thiết lập backend và Docker &
+    - Long khởi tạo backend NestJS, \texttt{docker-compose} và README; Pull Request \#2 merge lúc 23:25 ngày 22/10 \\
+    \hline
+
+    4 & 22/10/2026 - 23/10/2026 & Chia việc bằng issue và thiết lập CI &
+    - Long tạo 17 issue (\#3 đến \#19) lúc 23:30 ngày 22/10, thêm GitHub Actions (backend, frontend, docker) cùng mẫu issue và Pull Request; Pull Request \#20 merge lúc 09:35 ngày 23/10; thêm tài liệu yêu cầu và hướng dẫn làm issue \\
     \hline
 \end{tabularx}
+
 \vspace{0.8cm}
 
 % ==================== TASK 02 ====================
@@ -109,7 +118,6 @@
 \end{tabularx}
 
 \vspace{0.8cm}
-\clearpage
 
 % ==================== TASK 03 ====================
 \subsection*{Task 03: Trang Menu (Next.js)}
@@ -161,14 +169,104 @@
 
 \vspace{0.8cm}
 
-\TaskTable{04}
-\clearpage
+\subsection*{Task 04: Chi tiết và tùy chọn sản phẩm (Next.js)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 24/10/2026 & Xây dựng màn hình chi tiết sản phẩm &
+    - Tài làm màn hình chọn size (S, M, L) và topping, giá tự tính theo lựa chọn; mở Pull Request \#23 \\
+    \hline
+
+    2 & 25/10/2026 & Cập nhật nhánh theo \texttt{main} &
+    - Long gộp \texttt{main} vào nhánh task-4 trên GitHub (23:06), sau khi Task 03 và Task 02 đã merge \\
+    \hline
+
+    3 & 26/10/2026 & Đồng bộ nhánh và đổi Pull Request &
+    - Tài gộp \texttt{main} vào nhánh (17:33) rồi gộp bản nhánh trên GitHub vào bản trên máy (17:34); Pull Request \#23 được đóng, không merge. Lịch sử nhánh có nhiều commit gộp hơn commit nội dung \\
+    \hline
+
+    4 & 26/10/2026 & Pull Request \#30 &
+    - Tài mở Pull Request \#30 (17:40), Long merge vào \texttt{main} lúc 17:46. Issue \#6 vẫn đang mở \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
 
 \TaskTable{05}
-\TaskTable{06}
-\clearpage
 
-\TaskTable{07}
+\subsection*{Task 06: API tạo đơn hàng (POST /orders)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 & Xây dựng API tạo đơn hàng &
+    - Long viết \texttt{POST /orders}: kiểm tra dữ liệu bằng class-validator (giỏ không rỗng, số lượng 1 đến 99, size, topping, sản phẩm tồn tại), lưu đơn ở trạng thái PENDING và trả mã đơn; thêm bảng Order, OrderItem và migration \\
+    \hline
+
+    2 & 26/10/2026 & Tính tổng tiền ở server &
+    - Long tính tổng tiền theo giá sản phẩm, phụ thu size (S 0, M 5.000, L 10.000 đồng) và giá topping khớp màn hình chi tiết của Tài; cập nhật tài liệu API-CONTRACT (ví dụ tổng 84.000 đồng) \\
+    \hline
+
+    3 & 26/10/2026 & Kiểm thử &
+    - Long chạy lint, build và test (11/11 qua); chạy thật với PostgreSQL: đặt 2 ly cà phê sữa size M thêm trân châu trả tổng 84.000 đồng, giỏ rỗng trả lỗi 400 \\
+    \hline
+
+    4 & 26/10/2026 & Pull Request \#31 &
+    - Long mở Pull Request \#31 (17:47), CI chạy thành công, merge vào \texttt{main} lúc 17:49; issue \#8 đã đóng \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\subsection*{Task 07: Đăng ký, đăng nhập (JWT)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 & Đăng ký và đăng nhập &
+    - Long viết \texttt{POST /auth/register} và \texttt{POST /auth/login}: băm mật khẩu bằng bcrypt (thư viện bcryptjs), phát JWT, email trùng trả 409, sai thông tin đăng nhập trả cùng một thông báo 401 \\
+    \hline
+
+    2 & 26/10/2026 & Bảo vệ route đặt đơn &
+    - Long thêm guard JWT cho \texttt{POST /orders}, đơn gắn với người dùng trong token; ứng dụng không khởi động nếu thiếu biến \texttt{JWT\_SECRET} \\
+    \hline
+
+    3 & 26/10/2026 & Kiểm thử &
+    - Long chạy lint, build và test (20/20 qua); chạy thật với PostgreSQL: có token đặt được đơn, không có token trả 401, mật khẩu trong database là hash bcrypt \\
+    \hline
+
+    4 & 26/10/2026 & Pull Request \#32 &
+    - Long mở Pull Request \#32 (17:51), CI chạy thành công, merge vào \texttt{main} lúc 17:54; issue \#9 đã đóng. Frontend trên \texttt{main} chưa có trang đăng nhập nên chưa gọi được \texttt{POST /orders} \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\begin{tabularx}{\textwidth}{|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{Tình hình Sprint 2 (cập nhật 26/10/2026)} \\
+    \hline
+    - Đã xong: Task 06 (issue \#8) và Task 07 (issue \#9), đã merge qua Pull Request \#31 và \#32. \newline
+    - Task 04 (issue \#6): Pull Request \#30 đã merge nhưng issue vẫn đang mở. \newline
+    - Task 05 (issue \#7, giỏ hàng): chưa có Pull Request trên GitHub. \newline
+    - Kết luận: Sprint 2 chưa hoàn thành đầy đủ. \newline
+    - Phần backend của Sprint 3 (issue \#10, \#12, \#14 đến \#17: thanh toán, lịch sử đơn, máy trạng thái đơn hàng, chống gửi trùng, khóa lạc quan, tích điểm) đã viết trên các nhánh cục bộ, chưa tạo Pull Request nên chưa tính là hoàn thành. \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
 \TaskTable{08}
 \clearpage
 
