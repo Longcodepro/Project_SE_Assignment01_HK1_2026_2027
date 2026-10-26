@@ -8,7 +8,7 @@ import { unitPrice } from './pricing.js';
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateOrderDto) {
+  async create(userId: number, dto: CreateOrderDto) {
     const ids = [...new Set(dto.items.map((i) => i.productId))];
     const products = await this.prisma.product.findMany({
       where: { id: { in: ids } },
@@ -33,6 +33,7 @@ export class OrdersService {
     return this.prisma.order.create({
       data: {
         id: `ord_${randomBytes(5).toString('hex')}`,
+        userId,
         total,
         items: { create: items },
       },

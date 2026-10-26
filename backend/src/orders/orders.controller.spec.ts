@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { createValidationPipe } from '../common/validation.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { OrdersController } from './orders.controller.js';
 import { OrdersService } from './orders.service.js';
@@ -21,7 +22,16 @@ async function setup() {
         useValue: { product: { findMany }, order: { create } },
       },
     ],
-  }).compile();
+  })
+    // guard thật được test riêng ở auth.controller.spec.ts
+    .overrideGuard(JwtAuthGuard)
+    .useValue({
+      canActivate: (ctx: any) => {
+        ctx.switchToHttp().getRequest().user = { id: 7, email: 'a@b.c' };
+        return true;
+      },
+    })
+    .compile();
   const app = moduleRef.createNestApplication();
   app.useGlobalPipes(createValidationPipe());
   await app.init();
@@ -40,6 +50,7 @@ describe('POST /orders', () => {
     // 2 × (29000 + size M 5000 + trân châu 8000)
     expect(res.body).toMatchObject({ status: 'PENDING', total: 84000 });
     expect(res.body.id).toMatch(/^ord_/);
+    expect(create.mock.calls[0][0].data.userId).toBe(7);
     expect(create.mock.calls[0][0].data.items.create[0].unitPrice).toBe(42000);
     await app.close();
   });

@@ -21,6 +21,8 @@ Base URL: `http://localhost:4000`. Mọi thay đổi phải báo người kia tr
 
 ## POST /orders
 
+Cần header `Authorization: Bearer <accessToken>`, thiếu hoặc sai token trả 401. Đơn được gắn với người dùng trong token.
+
 Request
 
 ```json
@@ -46,3 +48,37 @@ Request
 ```
 
 Trạng thái đơn: `PENDING` → `PAID` | `PAYMENT_FAILED`.
+
+## POST /auth/register
+
+Request
+
+```json
+{ "email": "long@test.com", "password": "matkhau123", "name": "Long" }
+```
+
+`email` được chuẩn hóa chữ thường. `password` 6–72 ký tự. `name` không bắt buộc.
+
+201 Created
+
+```json
+{ "id": 1, "email": "long@test.com", "name": "Long" }
+```
+
+400 khi email/mật khẩu không hợp lệ. 409 khi email đã đăng ký.
+
+## POST /auth/login
+
+Request
+
+```json
+{ "email": "long@test.com", "password": "matkhau123" }
+```
+
+200 OK
+
+```json
+{ "accessToken": "eyJhbGciOi..." }
+```
+
+401 khi sai email hoặc mật khẩu (cùng một thông báo cho cả hai trường hợp). Token hết hạn sau `JWT_EXPIRES_IN` (mặc định 1 ngày); gửi lên bằng header `Authorization: Bearer <accessToken>`.
