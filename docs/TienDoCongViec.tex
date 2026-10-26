@@ -61,15 +61,106 @@
     \hline
     3 & 27/10/2026 - 29/10/2026 & Họp phân công công việc & Phân chia vai trò, xác định rõ trách nhiệm của từng thành viên cho các Sprint tiếp theo. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
     \hline
-    4 & 30/10/2026 - 01/11/2026 & Tổng hợp và đánh giá Task 1 & Viết báo cáo tiến độ, hoàn thiện kế hoạch chi tiết gửi giảng viên. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
+
+    4 &
+    22/10/2026 &
+    Thảo luận phân chia công việc bằng các issue&
+
+    \textbf - Long thực hiện push các issue và setup CI cho các issue \\
     \hline
 \end{tabularx}
 \vspace{0.8cm}
-\renewcommand{\arraystretch}{2.2} % Khôi phục độ giãn dòng cho các bảng trống tiếp theo
-\TaskTable{02}
-\clearpage % Sang trang mới cho dễ nhìn
 
-\TaskTable{03}
+% ==================== TASK 02 ====================
+\subsection*{Task 02: API danh sách sản phẩm (GET /products)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} &
+    \textbf{Thời gian} &
+    \textbf{Nội dung} &
+    \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 &
+    25/10/2026 &
+    Xây dựng API \texttt{GET /products} &
+    - Long thêm Prisma, model Product, migration và dữ liệu seed 6 sản phẩm, viết controller, service và test; tách PrismaService thành PrismaModule dùng chung \\
+    \hline
+
+    2 &
+    25/10/2026 &
+    Pull Request \#24 và CI &
+    - Long mở Pull Request \#24 và merge vào main; CI trên main chạy thành công \\
+    \hline
+
+    3 &
+    26/10/2026 &
+    Bổ sung tài liệu API và kiểm thử &
+    - Long thêm Swagger (\texttt{/docs}), collection Postman (4 request, 12 test) và ảnh minh họa cho 6 sản phẩm trong dữ liệu seed \\
+    \hline
+
+    4 &
+    26/10/2026 &
+    Kiểm tra hoàn thành Task 02 &
+    - Long chạy lint (0 lỗi, 0 cảnh báo), test (3/3 qua), build và \texttt{docker compose up -{}-build}; \texttt{GET /products} trả về đủ 6 sản phẩm \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+\clearpage
+
+% ==================== TASK 03 ====================
+\subsection*{Task 03: Trang Menu (Next.js)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} &
+    \textbf{Thời gian} &
+    \textbf{Nội dung} &
+    \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 &
+    24/10/2026 &
+    Xây dựng trang menu &
+    - Tài tạo trang menu, gọi API \texttt{GET /products}, hiển thị danh sách sản phẩm, có trạng thái loading và trạng thái empty \\
+    \hline
+
+    2 &
+    25/10/2026 &
+    Pull Request \#22 &
+    - Tài mở Pull Request \#22 và merge vào main \\
+    \hline
+
+    3 &
+    26/10/2026 &
+    Sửa kiểu dữ liệu sản phẩm &
+    - Tài sửa kiểu \texttt{Product} (trường \texttt{stock} không bắt buộc), Pull Request \#26 merge vào main, CI chạy thành công \\
+    \hline
+
+    4 &
+    26/10/2026 &
+    Kiểm tra hoàn thành Task 03 &
+    - Long chạy \texttt{docker compose up -{}-build}, phát hiện cổng frontend map sai (4001 sang 3000 trong khi ứng dụng chạy ở 4001) và sửa lại; mở \texttt{localhost:4001} thấy menu 6 sản phẩm lấy từ API thật \\
+    \hline
+\end{tabularx}
+
+\vspace{0.4cm}
+
+\begin{tabularx}{\textwidth}{|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{Kết luận Sprint 1 (26/10/2026)} \\
+    \hline
+    Sprint 1 hoàn thành: Task 01, 02, 03 (issue \#3, \#4, \#5 đã đóng). Mục tiêu Sprint ``mở trình duyệt thấy menu quán, dữ liệu lấy từ API thật'' đã đạt, đã kiểm tra bằng lint, test, build và chạy Docker. \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
 \TaskTable{04}
 \clearpage
 
