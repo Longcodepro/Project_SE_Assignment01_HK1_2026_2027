@@ -104,3 +104,32 @@ Request
 Thất bại: `"status": "PAYMENT_FAILED"` kèm `"reason": "Thẻ bị từ chối"`. Gọi lại với cùng `orderId` để thử lại.
 
 400 dữ liệu sai. 401 thiếu token. 404 đơn không tồn tại hoặc không phải của người dùng. 409 đơn đã `PAID` hoặc đang được xử lý bởi yêu cầu khác.
+
+## GET /orders/me
+
+Cần header `Authorization: Bearer <accessToken>`. Trả lịch sử đơn của người dùng đang đăng nhập, đơn mới nhất trước. Chưa có đơn thì trả `[]`.
+
+200 OK
+
+```json
+[
+  {
+    "id": "ord_123",
+    "status": "PAID",
+    "total": 84000,
+    "createdAt": "2026-10-26T03:40:26.834Z",
+    "items": [
+      {
+        "productId": 1,
+        "productName": "Cà phê sữa",
+        "quantity": 2,
+        "size": "M",
+        "toppings": ["tran-chau"],
+        "unitPrice": 42000
+      }
+    ]
+  }
+]
+```
+
+401 thiếu hoặc sai token.
