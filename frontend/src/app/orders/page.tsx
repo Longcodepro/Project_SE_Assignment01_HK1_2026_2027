@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { apiService } from '@/services/api';
 import { Order, OrderStatus } from '@/types';
-import { Clock, Coffee, CheckCircle2, AlertCircle, ChevronRight, RefreshCw, PackageCheck, ChefHat} from 'lucide-react';
+import { Clock, Coffee, CheckCircle2, AlertCircle, ChevronRight, RefreshCw, ChefHat} from 'lucide-react';
 
 export default function OrderHistoryPage(){
     const [orders, setOrders] = useState<Order[]>([]);

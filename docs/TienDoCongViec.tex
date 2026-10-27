@@ -1,4 +1,4 @@
-
+% !TEX program = xelatex
 \documentclass[12pt, a4paper]{article}
 
 % Cài đặt lề trang
@@ -6,12 +6,16 @@
 
 % Cài đặt ngôn ngữ tiếng Việt và font chữ
 \usepackage{fontspec}
-\usepackage[vietnamese, bidi=basic, provide=*]{babel}
+\usepackage[vietnamese, provide=*]{babel}
 \babelfont{rm}{Noto Sans}
 
 % Cài đặt bảng và màu sắc
 \usepackage{tabularx}
 \usepackage[table]{xcolor}
+\usepackage{array}
+
+% Cột X căn trái
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 % Tắt lùi đầu dòng
 \setlength{\parindent}{0pt}
@@ -47,37 +51,242 @@
 
 \vspace{0.5cm}
 
-% ==================== TASK 1 ====================
+% ==================== TASK 01 ====================
 \renewcommand{\arraystretch}{1.4} % Tối ưu giãn dòng cho bảng có chữ
 \subsection*{Task 01: Khảo sát yêu cầu và thiết lập môi trường dự án}
-\begin{tabularx}{\textwidth}{| c | p{3.2cm} | X | X |}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
     \hline
     \rowcolor{gray!20}
     \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
     \hline
-    1 & 21/10/2026 - 23/10/2026 & Đọc hiểu tài liệu yêu cầu (Requirement Analysis) & Nghiên cứu đề bài Assignment 1, xác định phạm vi hệ thống và các chức năng chính. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
+
+    1 & 21/10/2026 & Họp phân công Task 1 và tạo repository &
+    - Long tạo repository trên GitHub (commit đầu tiên lúc 09:37) \\
     \hline
-    2 & 24/10/2026 - 26/10/2026 & Khởi tạo dự án và quy chuẩn làm việc & Tạo Git repository, thống nhất luồng làm việc Git branching và quy ước commit. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
+
+    2 & 21/10/2026 & Thiết lập frontend &
+    - Tài khởi tạo Next.js, Dockerfile và file cấu hình môi trường; Pull Request \#1 merge lúc 13:51 \\
     \hline
-    3 & 27/10/2026 - 29/10/2026 & Họp phân công công việc & Phân chia vai trò, xác định rõ trách nhiệm của từng thành viên cho các Sprint tiếp theo. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
+
+    3 & 21/10/2026 - 22/10/2026 & Thiết lập backend và Docker &
+    - Long khởi tạo backend NestJS, \texttt{docker-compose} và README; Pull Request \#2 merge lúc 23:25 ngày 22/10 \\
     \hline
-    4 & 30/10/2026 - 01/11/2026 & Tổng hợp và đánh giá Task 1 & Viết báo cáo tiến độ, hoàn thiện kế hoạch chi tiết gửi giảng viên. \newline \textbf{Phân công:} [Điền người thực hiện...] \\
+
+    4 & 22/10/2026 - 23/10/2026 & Chia việc bằng issue và thiết lập CI &
+    - Long tạo 17 issue (\#3 đến \#19) lúc 23:30 ngày 22/10, thêm GitHub Actions (backend, frontend, docker) cùng mẫu issue và Pull Request; Pull Request \#20 merge lúc 09:35 ngày 23/10; thêm tài liệu yêu cầu và hướng dẫn làm issue \\
     \hline
 \end{tabularx}
+
 \vspace{0.8cm}
-\renewcommand{\arraystretch}{2.2} % Khôi phục độ giãn dòng cho các bảng trống tiếp theo
-\TaskTable{02}
-\clearpage % Sang trang mới cho dễ nhìn
 
-\TaskTable{03}
-\TaskTable{04}
-\clearpage
+% ==================== TASK 02 ====================
+\subsection*{Task 02: API danh sách sản phẩm (GET /products)}
 
-\TaskTable{05}
-\TaskTable{06}
-\clearpage
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} &
+    \textbf{Thời gian} &
+    \textbf{Nội dung} &
+    \textbf{Công việc \& Phân công} \\
+    \hline
 
-\TaskTable{07}
+    1 &
+    25/10/2026 &
+    Xây dựng API \texttt{GET /products} &
+    - Long thêm Prisma, model Product, migration và dữ liệu seed 6 sản phẩm, viết controller, service và test; tách PrismaService thành PrismaModule dùng chung \\
+    \hline
+
+    2 &
+    25/10/2026 &
+    Pull Request \#24 và CI &
+    - Long mở Pull Request \#24 và merge vào main; CI trên main chạy thành công \\
+    \hline
+
+    3 &
+    26/10/2026 &
+    Bổ sung tài liệu API và kiểm thử &
+    - Long thêm Swagger (\texttt{/docs}), collection Postman (4 request, 12 test) và ảnh minh họa cho 6 sản phẩm trong dữ liệu seed \\
+    \hline
+
+    4 &
+    26/10/2026 &
+    Kiểm tra hoàn thành Task 02 &
+    - Long chạy lint (0 lỗi, 0 cảnh báo), test (3/3 qua), build và \texttt{docker compose up -{}-build}; \texttt{GET /products} trả về đủ 6 sản phẩm \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+% ==================== TASK 03 ====================
+\subsection*{Task 03: Trang Menu (Next.js)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} &
+    \textbf{Thời gian} &
+    \textbf{Nội dung} &
+    \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 &
+    24/10/2026 &
+    Xây dựng trang menu &
+    - Tài tạo trang menu, gọi API \texttt{GET /products}, hiển thị danh sách sản phẩm, có trạng thái loading và trạng thái empty \\
+    \hline
+
+    2 &
+    25/10/2026 &
+    Pull Request \#22 &
+    - Tài mở Pull Request \#22 và merge vào main \\
+    \hline
+
+    3 &
+    26/10/2026 &
+    Sửa kiểu dữ liệu sản phẩm &
+    - Tài sửa kiểu \texttt{Product} (trường \texttt{stock} không bắt buộc), Pull Request \#26 merge vào main, CI chạy thành công \\
+    \hline
+
+    4 &
+    26/10/2026 &
+    Kiểm tra hoàn thành Task 03 &
+    - Long chạy \texttt{docker compose up -{}-build}, phát hiện cổng frontend map sai (4001 sang 3000 trong khi ứng dụng chạy ở 4001) và sửa lại; mở \texttt{localhost:4001} thấy menu 6 sản phẩm lấy từ API thật \\
+    \hline
+\end{tabularx}
+
+\vspace{0.4cm}
+
+\begin{tabularx}{\textwidth}{|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{Kết luận Sprint 1 (26/10/2026)} \\
+    \hline
+    Sprint 1 hoàn thành: Task 01, 02, 03 (issue \#3, \#4, \#5 đã đóng). Mục tiêu Sprint ``mở trình duyệt thấy menu quán, dữ liệu lấy từ API thật'' đã đạt, đã kiểm tra bằng lint, test, build và chạy Docker. \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\subsection*{Task 04: Chi tiết và tùy chọn sản phẩm (Next.js)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 24/10/2026 & Xây dựng màn hình chi tiết sản phẩm &
+    - Tài làm màn hình chọn size (S, M, L) và topping, giá tự tính theo lựa chọn; mở Pull Request \#23 \\
+    \hline
+
+    2 & 25/10/2026 & Cập nhật nhánh theo \texttt{main} &
+    - Long gộp \texttt{main} vào nhánh task-4 trên GitHub (23:06), sau khi Task 03 và Task 02 đã merge \\
+    \hline
+
+    3 & 26/10/2026 & Đồng bộ nhánh và đổi Pull Request &
+    - Tài gộp \texttt{main} vào nhánh (17:33) rồi gộp bản nhánh trên GitHub vào bản trên máy (17:34); Pull Request \#23 được đóng, không merge. Lịch sử nhánh có nhiều commit gộp hơn commit nội dung \\
+    \hline
+
+    4 & 26/10/2026 & Pull Request \#30 &
+    - Tài mở Pull Request \#30 (17:40), Long merge vào \texttt{main} lúc 17:46. Issue \#6 vẫn đang mở \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\subsection*{Task 05: Giỏ hàng (Next.js + Zustand)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 & Store giỏ hàng &
+    - Tài viết \texttt{useCartStore} bằng Zustand, lưu vào \texttt{localStorage} (persist); phân biệt món theo mã \texttt{productId-size-toppings}, tăng giảm số lượng (tối thiểu 1 ly), xóa từng món và xóa cả giỏ \\
+    \hline
+
+    2 & 26/10/2026 & Trang giỏ hàng và Navbar &
+    - Tài làm trang \texttt{/cart}: danh sách món, đơn giá kèm topping, tổng tiền, trạng thái giỏ rỗng có nút quay về Menu; Navbar có huy hiệu đếm số ly, dùng \texttt{useSyncExternalStore} để tránh lỗi hydration \\
+    \hline
+
+    3 & 26/10/2026 & Pull Request \#34 &
+    - Tài mở Pull Request \#34 (22:03), CI chạy thành công (3/3), merge vào \texttt{main} lúc 23:05; issue \#7 tự đóng. Pull Request chưa có review \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+
+\subsection*{Task 06: API tạo đơn hàng (POST /orders)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 & Xây dựng API tạo đơn hàng &
+    - Long viết \texttt{POST /orders}: kiểm tra dữ liệu bằng class-validator (giỏ không rỗng, số lượng 1 đến 99, size, topping, sản phẩm tồn tại), lưu đơn ở trạng thái PENDING và trả mã đơn; thêm bảng Order, OrderItem và migration \\
+    \hline
+
+    2 & 26/10/2026 & Tính tổng tiền ở server &
+    - Long tính tổng tiền theo giá sản phẩm, phụ thu size (S 0, M 5.000, L 10.000 đồng) và giá topping khớp màn hình chi tiết của Tài; cập nhật tài liệu API-CONTRACT (ví dụ tổng 84.000 đồng) \\
+    \hline
+
+    3 & 26/10/2026 & Kiểm thử &
+    - Long chạy lint, build và test (11/11 qua); chạy thật với PostgreSQL: đặt 2 ly cà phê sữa size M thêm trân châu trả tổng 84.000 đồng, giỏ rỗng trả lỗi 400 \\
+    \hline
+
+    4 & 26/10/2026 & Pull Request \#31 &
+    - Long mở Pull Request \#31 (17:47), CI chạy thành công, merge vào \texttt{main} lúc 17:49; issue \#8 đã đóng \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\subsection*{Task 07: Đăng ký, đăng nhập (JWT)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 & Đăng ký và đăng nhập &
+    - Long viết \texttt{POST /auth/register} và \texttt{POST /auth/login}: băm mật khẩu bằng bcrypt (thư viện bcryptjs), phát JWT, email trùng trả 409, sai thông tin đăng nhập trả cùng một thông báo 401 \\
+    \hline
+
+    2 & 26/10/2026 & Bảo vệ route đặt đơn &
+    - Long thêm guard JWT cho \texttt{POST /orders}, đơn gắn với người dùng trong token; ứng dụng không khởi động nếu thiếu biến \texttt{JWT\_SECRET} \\
+    \hline
+
+    3 & 26/10/2026 & Kiểm thử &
+    - Long chạy lint, build và test (20/20 qua); chạy thật với PostgreSQL: có token đặt được đơn, không có token trả 401, mật khẩu trong database là hash bcrypt \\
+    \hline
+
+    4 & 26/10/2026 & Pull Request \#32 &
+    - Long mở Pull Request \#32 (17:51), CI chạy thành công, merge vào \texttt{main} lúc 17:54; issue \#9 đã đóng. Frontend trên \texttt{main} chưa có trang đăng nhập nên chưa gọi được \texttt{POST /orders} \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\begin{tabularx}{\textwidth}{|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{Tình hình Sprint 2 (cập nhật 26/10/2026)} \\
+    \hline
+    - Đã xong: Task 04 (issue \#6, Pull Request \#30), Task 05 (issue \#7, Pull Request \#34), Task 06 (issue \#8, Pull Request \#31) và Task 07 (issue \#9, Pull Request \#32), đều đã merge vào \texttt{main}, bốn issue đã đóng. \newline
+    - Kết luận: Sprint 2 đã hoàn thành. \newline
+    - Phần backend của Sprint 3 (issue \#10, \#12, \#14 đến \#17: thanh toán, lịch sử đơn, máy trạng thái đơn hàng, chống gửi trùng, khóa lạc quan, tích điểm) đã viết trên các nhánh cục bộ, chưa tạo Pull Request nên chưa tính là hoàn thành. \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
 \TaskTable{08}
 \clearpage
 
