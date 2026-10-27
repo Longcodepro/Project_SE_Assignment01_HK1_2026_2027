@@ -196,7 +196,7 @@ export default function AuthModal() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="tenban@email.com"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -213,7 +213,7 @@ export default function AuthModal() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -259,7 +259,7 @@ export default function AuthModal() {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Nguyễn Văn A"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -276,7 +276,7 @@ export default function AuthModal() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="tenban@email.com"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
                                     />
                                 </div>
                             </div>
@@ -294,7 +294,7 @@ export default function AuthModal() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
-                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
+                                        className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-800 focus:bg-white transition"
                                     />
                                 </div>
                             </div>

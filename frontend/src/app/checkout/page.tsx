@@ -265,7 +265,7 @@ export default function CheckoutPage(){
                                         onChange={(e) => setCardNumber(e.target.value)}
                                         placeholder="9704000000000001"
                                         maxLength={19}
-                                        className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-base sm:text-sm font-mono focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                                        className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-base sm:text-sm text-gray-900 placeholder:text-gray-400 font-mono focus:ring-2 focus:ring-blue-600 focus:outline-none"
                                     />
                                     <p className="text-[10px] sm:text-[11px] text-gray-500">
                                         💡 Quy tắc: Đuôi khác <code className="font-bold text-blue-700">0000</code> là thành công; đuôi <code className="font-bold text-red-600">0000</code> sẽ bị từ chối.
