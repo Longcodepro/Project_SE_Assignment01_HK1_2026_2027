@@ -1,4 +1,6 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
+import type { Request, Response, NextFunction } from 'express';
 import { setupSwagger } from './swagger.js';
 import { createValidationPipe } from './common/validation.js';
 import { AppModule, ObserveInstrument } from './app.module.js';
@@ -7,6 +9,26 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     instrument: ObserveInstrument,
   });
+
+  const httpLogger = new Logger('HTTP');
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const start = Date.now();
+    const { method, originalUrl } = req;
+    res.on('finish', () => {
+      const { statusCode } = res;
+      const duration = Date.now() - start;
+      const message = `${method} ${originalUrl} ${statusCode} - ${duration}ms`;
+      if (statusCode >= 500) {
+        httpLogger.error(message);
+      } else if (statusCode >= 400) {
+        httpLogger.warn(message);
+      } else {
+        httpLogger.log(message);
+      }
+    });
+    next();
+  });
+
   setupSwagger(app);
   app.useGlobalPipes(createValidationPipe());
 
