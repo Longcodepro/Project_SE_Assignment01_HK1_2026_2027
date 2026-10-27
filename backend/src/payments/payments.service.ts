@@ -73,15 +73,19 @@ export class PaymentsService {
 
     try {
       const payment = await this.prisma.$transaction(async (tx) => {
-        if (changesStatus) {
-          // Chỉ đổi khi đơn vẫn đúng trạng thái lúc đọc, chặn hai yêu cầu cùng xử lý một đơn
-          const updated = await tx.order.updateMany({
-            where: { id: order.id, status: order.status },
-            data: { status: orderStatus },
-          });
-          if (updated.count === 0) {
-            throw new ConflictException('Đơn đã được xử lý bởi yêu cầu khác');
-          }
+        // Khoá lạc quan: chỉ ghi khi đơn chưa bị yêu cầu khác sửa kể từ lúc đọc.
+        // Lần thử lại thất bại không đổi trạng thái vẫn tăng version để các lần
+        // thanh toán đồng thời trên cùng một đơn không lọt qua nhau.
+        const updated = await tx.order.updateMany({
+          where: { id: order.id, version: order.version },
+          data: changesStatus
+            ? { status: orderStatus, version: { increment: 1 } }
+            : { version: { increment: 1 } },
+        });
+        if (updated.count === 0) {
+          throw new ConflictException(
+            'Đơn vừa được cập nhật bởi yêu cầu khác, vui lòng thử lại',
+          );
         }
         return tx.payment.create({
           data: {

@@ -38,7 +38,7 @@ async function setup(order: object | null, updatedCount = 1) {
   return { app, orderFindFirst, orderUpdateMany, paymentCreate, paymentFindUnique, http: () => request(app.getHttpServer()) };
 }
 
-const pending = { id: 'ord_1', userId: 7, status: 'PENDING', total: 84000 };
+const pending = { id: 'ord_1', userId: 7, status: 'PENDING', total: 84000, version: 3 };
 
 describe('POST /payments', () => {
   it('Ví: đơn chuyển PAID và lưu lần thanh toán SUCCESS với số tiền của đơn', async () => {
@@ -48,7 +48,10 @@ describe('POST /payments', () => {
 
     expect(res.body).toMatchObject({ orderId: 'ord_1', status: 'PAID', method: 'WALLET', amount: 84000 });
     expect(orderFindFirst).toHaveBeenCalledWith({ where: { id: 'ord_1', userId: 7 } });
-    expect(orderUpdateMany.mock.calls[0][0].data).toEqual({ status: 'PAID' });
+    expect(orderUpdateMany.mock.calls[0][0]).toEqual({
+      where: { id: 'ord_1', version: 3 },
+      data: { status: 'PAID', version: { increment: 1 } },
+    });
     expect(paymentCreate.mock.calls[0][0].data).toMatchObject({ status: 'SUCCESS', amount: 84000 });
     await app.close();
   });
@@ -66,7 +69,7 @@ describe('POST /payments', () => {
     const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'CARD', cardNumber: '4111111111110000' }).expect(201);
 
     expect(res.body).toMatchObject({ status: 'PAYMENT_FAILED', reason: 'Thẻ bị từ chối' });
-    expect(orderUpdateMany.mock.calls[0][0].data).toEqual({ status: 'PAYMENT_FAILED' });
+    expect(orderUpdateMany.mock.calls[0][0].data).toEqual({ status: 'PAYMENT_FAILED', version: { increment: 1 } });
     expect(paymentCreate.mock.calls[0][0].data.status).toBe('FAILED');
     await app.close();
   });
@@ -84,7 +87,8 @@ describe('POST /payments', () => {
     const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'CARD', cardNumber: '4111111111110000' }).expect(201);
 
     expect(res.body.status).toBe('PAYMENT_FAILED');
-    expect(orderUpdateMany).not.toHaveBeenCalled();
+    // vẫn qua cổng version nhưng không đổi status
+    expect(orderUpdateMany.mock.calls[0][0].data).toEqual({ version: { increment: 1 } });
     expect(paymentCreate).toHaveBeenCalledTimes(1);
     await app.close();
   });
@@ -93,7 +97,7 @@ describe('POST /payments', () => {
     const { app, http, orderUpdateMany } = await setup({ ...pending, status: 'PAYMENT_FAILED' });
     const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'WALLET' }).expect(201);
     expect(res.body.status).toBe('PAID');
-    expect(orderUpdateMany.mock.calls[0][0].where).toEqual({ id: 'ord_1', status: 'PAYMENT_FAILED' });
+    expect(orderUpdateMany.mock.calls[0][0].where).toEqual({ id: 'ord_1', version: 3 });
     await app.close();
   });
 
@@ -111,9 +115,10 @@ describe('POST /payments', () => {
     await app.close();
   });
 
-  it('409 khi hai yêu cầu cùng thanh toán một đơn (updateMany không khớp dòng nào)', async () => {
+  it('409 khi đơn bị yêu cầu khác sửa trước (version đã đổi nên updateMany không khớp dòng nào)', async () => {
     const { app, http, paymentCreate } = await setup(pending, 0);
-    await http().post('/payments').send({ orderId: 'ord_1', method: 'WALLET' }).expect(409);
+    const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'WALLET' }).expect(409);
+    expect(res.body.message).toMatch(/cập nhật bởi yêu cầu khác/);
     expect(paymentCreate).not.toHaveBeenCalled();
     await app.close();
   });

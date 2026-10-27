@@ -38,6 +38,8 @@ model Order {
   // VND, tính ở server từ giá sản phẩm + size + topping
   total     Int
   createdAt DateTime    @default(now())
+  // Khoá lạc quan: mỗi lần cập nhật đơn phải khớp version đã đọc, rồi tăng thêm 1
+  version   Int         @default(0)
   items     OrderItem[]
   payments  Payment[]
 
