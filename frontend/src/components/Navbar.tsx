@@ -1,15 +1,17 @@
 'use client';
 
 import Link from "next/link";
-import { Coffee, ShoppingBag, Clock, ReceiptText, User as UserIcon, LogIn, LogOut } from 'lucide-react';
+import { Coffee, ShoppingBag, Clock, ReceiptText, User as UserIcon, LogIn, LogOut, Radio } from 'lucide-react';
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import AuthModal from "@/components/AuthModal";
-import { useSyncExternalStore } from "react";
+import ServerConfigModal from "@/components/ServerConfigModal";
+import { useSyncExternalStore, useState } from "react";
 
 export default function Navbar() {
     const totalItems = useCartStore((state) => state.getTotalItems());
     const { token, user, openAuthModal, logout } = useAuthStore();
+    const [isServerModalOpen, setIsServerModalOpen] = useState(false);
 
     // Tránh lỗi hydration mismatch giữa SSR và Client
     const isClient = useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -52,8 +54,18 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Cụm nút Đăng nhập, Đơn hàng & Giỏ hàng góc phải */}
-                <div className="flex items-center gap-1.5 sm:gap-3">
+                {/* Cụm nút Đăng nhập, Đơn hàng, Server config & Giỏ hàng góc phải */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5">
+                    {/* Nút Cấu hình Server API Backend (Hỗ trợ demo từ xa / điện thoại) */}
+                    <button
+                        onClick={() => setIsServerModalOpen(true)}
+                        className="flex items-center gap-1 bg-[#3E2314]/80 hover:bg-[#57341B] border border-[#57341B] hover:border-[#8C5835] text-[#FAF7F2] p-1.5 sm:px-2.5 sm:py-2 rounded-full transition active:scale-95 shadow-sm text-xs font-semibold"
+                        title="Cấu hình kết nối Backend API (Cloudflare Tunnel)"
+                    >
+                        <Radio className="w-3.5 h-3.5 text-[#D4A373] animate-pulse" />
+                        <span className="hidden md:inline text-[11px] text-[#EED8C9]">Server</span>
+                    </button>
+
                     {/* NÚT TÀI KHOẢN / ĐĂNG NHẬP (TASK 7 FE) */}
                     {isClient && token ? (
                         <div className="flex items-center bg-[#3E2314]/90 border border-[#57341B] rounded-full p-1 sm:pl-3 shadow-sm">
@@ -116,6 +128,12 @@ export default function Navbar() {
 
             {/* Modal Đăng nhập / Đăng ký */}
             <AuthModal />
+
+            {/* Modal Cấu hình Backend Server API */}
+            <ServerConfigModal
+                isOpen={isServerModalOpen}
+                onClose={() => setIsServerModalOpen(false)}
+            />
         </header>
     );
 }
