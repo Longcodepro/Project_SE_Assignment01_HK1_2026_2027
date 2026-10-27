@@ -47,7 +47,7 @@ Request
 { "statusCode": 400, "message": ["items must not be empty"], "error": "Bad Request" }
 ```
 
-Trạng thái đơn: `PENDING` → `PAID` | `PAYMENT_FAILED`.
+Trạng thái đơn: `PENDING` → `PAID` | `PAYMENT_FAILED`. Đơn `PAYMENT_FAILED` được thanh toán lại (→ `PAID`). `PAID` là trạng thái cuối.
 
 ## POST /auth/register
 
@@ -82,3 +82,25 @@ Request
 ```
 
 401 khi sai email hoặc mật khẩu (cùng một thông báo cho cả hai trường hợp). Token hết hạn sau `JWT_EXPIRES_IN` (mặc định 1 ngày); gửi lên bằng header `Authorization: Bearer <accessToken>`.
+
+## POST /payments
+
+Cần header `Authorization: Bearer <accessToken>`. Số tiền lấy từ đơn, client không gửi.
+
+Request
+
+```json
+{ "orderId": "ord_123", "method": "CARD", "cardNumber": "4111111111111111" }
+```
+
+`method`: `WALLET` hoặc `CARD`. `cardNumber` (13–19 chữ số) bắt buộc khi `CARD`, không được lưu lại. Mô phỏng: thẻ có 4 số cuối `0000` bị từ chối; Ví từ chối khi đơn trên 500.000đ.
+
+201 Created (cả khi thanh toán thất bại, xem `status`)
+
+```json
+{ "paymentId": 1, "orderId": "ord_123", "method": "CARD", "amount": 84000, "status": "PAID" }
+```
+
+Thất bại: `"status": "PAYMENT_FAILED"` kèm `"reason": "Thẻ bị từ chối"`. Gọi lại với cùng `orderId` để thử lại.
+
+400 dữ liệu sai. 401 thiếu token. 404 đơn không tồn tại hoặc không phải của người dùng. 409 đơn đã `PAID` hoặc đang được xử lý bởi yêu cầu khác.

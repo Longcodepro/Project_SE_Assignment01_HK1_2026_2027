@@ -37,6 +37,7 @@ model Order {
   total     Int
   createdAt DateTime    @default(now())
   items     OrderItem[]
+  payments  Payment[]
 
   @@index([userId])
 }
@@ -64,4 +65,28 @@ model User {
   name         String?
   createdAt    DateTime @default(now())
   orders       Order[]
+}
+
+enum PaymentMethod {
+  WALLET
+  CARD
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+}
+
+// Mỗi lần thử thanh toán là một dòng, nên đơn thất bại có thể thử lại
+model Payment {
+  id        Int           @id @default(autoincrement())
+  orderId   String
+  order     Order         @relation(fields: [orderId], references: [id])
+  method    PaymentMethod
+  status    PaymentStatus
+  // VND, lấy từ Order.total chứ không nhận từ client
+  amount    Int
+  createdAt DateTime      @default(now())
+
+  @@index([orderId])
 }
