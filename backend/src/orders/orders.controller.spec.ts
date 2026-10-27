@@ -8,7 +8,7 @@ import { OrdersService } from './orders.service.js';
 
 const item = { productId: 1, quantity: 2, size: 'M', toppings: ['tran-chau'] };
 
-async function setup() {
+async function setup(findManyOrders = vi.fn().mockResolvedValue([])) {
   const create = vi.fn().mockImplementation(({ data }) =>
     Promise.resolve({ id: data.id, status: 'PENDING', total: data.total }),
   );
@@ -19,7 +19,7 @@ async function setup() {
       OrdersService,
       {
         provide: PrismaService,
-        useValue: { product: { findMany }, order: { create } },
+        useValue: { product: { findMany }, order: { create, findMany: findManyOrders } },
       },
     ],
   })
@@ -35,7 +35,7 @@ async function setup() {
   const app = moduleRef.createNestApplication();
   app.useGlobalPipes(createValidationPipe());
   await app.init();
-  return { app, create };
+  return { app, create, findManyOrders };
 }
 
 describe('POST /orders', () => {
@@ -84,6 +84,64 @@ describe('POST /orders', () => {
       .expect(400);
 
     expect(create).not.toHaveBeenCalled();
+    await app.close();
+  });
+});
+
+describe('GET /orders/me', () => {
+  it('trả lịch sử đơn của người dùng đang đăng nhập, đơn mới nhất trước', async () => {
+    const createdAt = new Date('2026-10-26T03:00:00.000Z');
+    const findManyOrders = vi.fn().mockResolvedValue([
+      {
+        id: 'ord_1',
+        status: 'PAID',
+        total: 84000,
+        createdAt,
+        items: [
+          {
+            productId: 1,
+            quantity: 2,
+            size: 'M',
+            toppings: ['tran-chau'],
+            unitPrice: 42000,
+            product: { name: 'Cà phê sữa' },
+          },
+        ],
+      },
+    ]);
+    const { app } = await setup(findManyOrders);
+
+    const res = await request(app.getHttpServer()).get('/orders/me').expect(200);
+
+    expect(findManyOrders.mock.calls[0][0]).toMatchObject({
+      where: { userId: 7 },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(res.body).toEqual([
+      {
+        id: 'ord_1',
+        status: 'PAID',
+        total: 84000,
+        createdAt: createdAt.toISOString(),
+        items: [
+          {
+            productId: 1,
+            productName: 'Cà phê sữa',
+            quantity: 2,
+            size: 'M',
+            toppings: ['tran-chau'],
+            unitPrice: 42000,
+          },
+        ],
+      },
+    ]);
+    await app.close();
+  });
+
+  it('chưa có đơn thì trả mảng rỗng', async () => {
+    const { app } = await setup();
+    const res = await request(app.getHttpServer()).get('/orders/me').expect(200);
+    expect(res.body).toEqual([]);
     await app.close();
   });
 });

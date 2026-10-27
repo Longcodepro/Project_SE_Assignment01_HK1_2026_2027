@@ -40,4 +40,35 @@ export class OrdersService {
       select: { id: true, status: true, total: true },
     });
   }
+
+  async findMine(userId: number) {
+    const orders = await this.prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        items: {
+          orderBy: { id: 'asc' },
+          select: {
+            productId: true,
+            quantity: true,
+            size: true,
+            toppings: true,
+            unitPrice: true,
+            product: { select: { name: true } },
+          },
+        },
+      },
+    });
+    return orders.map(({ items, ...order }) => ({
+      ...order,
+      items: items.map(({ product, ...item }) => ({
+        ...item,
+        productName: product.name,
+      })),
+    }));
+  }
 }
