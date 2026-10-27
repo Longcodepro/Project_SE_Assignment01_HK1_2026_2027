@@ -36,9 +36,9 @@ echo ""
 
 # Nếu đã cài binary cloudflared thì dùng trực tiếp
 if command -v cloudflared &> /dev/null; then
-    cloudflared tunnel --url http://localhost:4000
+    cloudflared tunnel --protocol http2 --url http://localhost:4000
 else
-    # Nếu chưa cài, chạy qua Docker image chính chủ của Cloudflare (không cần cài gì thêm)
-    echo "-> Đang chạy Cloudflare Tunnel qua Docker container..."
-    docker run --rm -it --network host cloudflare/cloudflared:latest tunnel --url http://localhost:4000
+    # Nếu chưa cài, chạy qua Docker image chính chủ của Cloudflare (dùng HTTP/2 để tránh bị nhà mạng chặn UDP/QUIC)
+    echo "-> Đang chạy Cloudflare Tunnel qua Docker container (giao thức HTTP/2)..."
+    docker run --rm -it --network host cloudflare/cloudflared:latest tunnel --protocol http2 --url http://localhost:4000
 fi
