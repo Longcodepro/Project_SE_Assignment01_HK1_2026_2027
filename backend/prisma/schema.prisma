@@ -68,6 +68,8 @@ model User {
   // bcrypt hash, không bao giờ trả ra ngoài API
   passwordHash String
   name         String?
+  // Tích lũy khi thanh toán thành công (xem payments/loyalty.ts)
+  loyaltyPoints Int     @default(0)
   createdAt    DateTime @default(now())
   orders       Order[]
 }
@@ -92,6 +94,8 @@ model Payment {
   // VND, lấy từ Order.total chứ không nhận từ client
   amount    Int
   failureReason  String?
+  // Điểm tích được từ lần thanh toán này, lưu lại để gửi lại cùng key vẫn trả đúng
+  pointsEarned   Int           @default(0)
   idempotencyKey String?
   createdAt DateTime      @default(now())
 

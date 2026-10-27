@@ -6,6 +6,7 @@ import {
 import { isUniqueViolation } from '../common/idempotency.js';
 import { assertTransition, canTransition } from '../orders/order-status.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { pointsFor } from './loyalty.js';
 import type { CreatePaymentDto } from './dto/create-payment.dto.js';
 import { MockPaymentGateway } from './mock-gateway.js';
 
@@ -16,6 +17,7 @@ type PaymentRow = {
   amount: number;
   status: string;
   failureReason: string | null;
+  pointsEarned: number;
 };
 
 // Dạng trả về cho client; lần gửi lại cùng Idempotency-Key cũng đi qua hàm này
@@ -25,6 +27,7 @@ const toResponse = (p: PaymentRow) => ({
   method: p.method,
   amount: p.amount,
   status: p.status === 'SUCCESS' ? 'PAID' : 'PAYMENT_FAILED',
+  pointsEarned: p.pointsEarned,
   reason: p.failureReason ?? undefined,
 });
 
@@ -71,6 +74,9 @@ export class PaymentsService {
     const changesStatus = orderStatus !== order.status;
     if (changesStatus) assertTransition(order.status, orderStatus);
 
+    // Chỉ tích điểm khi thanh toán thành công
+    const pointsEarned = result.ok ? pointsFor(order.total) : 0;
+
     try {
       const payment = await this.prisma.$transaction(async (tx) => {
         // Khoá lạc quan: chỉ ghi khi đơn chưa bị yêu cầu khác sửa kể từ lúc đọc.
@@ -87,6 +93,13 @@ export class PaymentsService {
             'Đơn vừa được cập nhật bởi yêu cầu khác, vui lòng thử lại',
           );
         }
+        // Cộng điểm cùng transaction với việc đổi đơn sang PAID nên không bao giờ lệch nhau
+        if (pointsEarned > 0) {
+          await tx.user.update({
+            where: { id: userId },
+            data: { loyaltyPoints: { increment: pointsEarned } },
+          });
+        }
         return tx.payment.create({
           data: {
             orderId: order.id,
@@ -94,6 +107,7 @@ export class PaymentsService {
             status: result.ok ? 'SUCCESS' : 'FAILED',
             amount: order.total,
             failureReason: result.reason,
+            pointsEarned,
             idempotencyKey,
           },
         });

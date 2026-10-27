@@ -14,7 +14,12 @@ async function setup(order: object | null, updatedCount = 1) {
     .mockImplementation(({ data }) => Promise.resolve({ id: 11, ...data }));
   const orderFindFirst = vi.fn().mockResolvedValue(order);
   const paymentFindUnique = vi.fn().mockResolvedValue(null);
-  const tx = { order: { updateMany: orderUpdateMany }, payment: { create: paymentCreate } };
+  const userUpdate = vi.fn().mockResolvedValue({});
+  const tx = {
+    order: { updateMany: orderUpdateMany },
+    payment: { create: paymentCreate },
+    user: { update: userUpdate },
+  };
   const prisma = {
     order: { findFirst: orderFindFirst },
     payment: { findUnique: paymentFindUnique },
@@ -35,7 +40,7 @@ async function setup(order: object | null, updatedCount = 1) {
   const app = moduleRef.createNestApplication();
   app.useGlobalPipes(createValidationPipe());
   await app.init();
-  return { app, orderFindFirst, orderUpdateMany, paymentCreate, paymentFindUnique, http: () => request(app.getHttpServer()) };
+  return { app, orderFindFirst, orderUpdateMany, paymentCreate, paymentFindUnique, userUpdate, http: () => request(app.getHttpServer()) };
 }
 
 const pending = { id: 'ord_1', userId: 7, status: 'PENDING', total: 84000, version: 3 };
@@ -52,7 +57,7 @@ describe('POST /payments', () => {
       where: { id: 'ord_1', version: 3 },
       data: { status: 'PAID', version: { increment: 1 } },
     });
-    expect(paymentCreate.mock.calls[0][0].data).toMatchObject({ status: 'SUCCESS', amount: 84000 });
+    expect(paymentCreate.mock.calls[0][0].data).toMatchObject({ status: 'SUCCESS', amount: 84000, pointsEarned: 84 });
     await app.close();
   });
 
@@ -108,6 +113,30 @@ describe('POST /payments', () => {
     await app.close();
   });
 
+  it('tích điểm khi thành công: 1 điểm / 1.000đ, làm tròn xuống, cộng vào đúng người dùng', async () => {
+    const { app, http, userUpdate } = await setup({ ...pending, total: 29900 });
+    const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'WALLET' }).expect(201);
+    expect(res.body.pointsEarned).toBe(29);
+    expect(userUpdate).toHaveBeenCalledWith({ where: { id: 7 }, data: { loyaltyPoints: { increment: 29 } } });
+    await app.close();
+  });
+
+  it('thanh toán thất bại thì không tích điểm', async () => {
+    const { app, http, userUpdate } = await setup(pending);
+    const res = await http().post('/payments').send({ orderId: 'ord_1', method: 'CARD', cardNumber: '4111111111110000' }).expect(201);
+    expect(res.body.pointsEarned).toBe(0);
+    expect(userUpdate).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('gửi lại cùng key không cộng điểm lần nữa', async () => {
+    const { app, http, userUpdate, paymentFindUnique } = await setup({ ...pending, status: 'PAID' });
+    paymentFindUnique.mockResolvedValue({ id: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'SUCCESS', failureReason: null, pointsEarned: 84 });
+    await http().post('/payments').set('Idempotency-Key', 'pay-1').send({ orderId: 'ord_1', method: 'WALLET' }).expect(201);
+    expect(userUpdate).not.toHaveBeenCalled();
+    await app.close();
+  });
+
   it('409 khi đơn đã PAID, không gọi cổng thanh toán', async () => {
     const { app, http, paymentCreate } = await setup({ ...pending, status: 'PAID' });
     await http().post('/payments').send({ orderId: 'ord_1', method: 'WALLET' }).expect(409);
@@ -139,7 +168,7 @@ describe('POST /payments', () => {
 
 describe('POST /payments với Idempotency-Key', () => {
   const dto = { orderId: 'ord_1', method: 'WALLET' };
-  const old = { id: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'SUCCESS', failureReason: null };
+  const old = { id: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'SUCCESS', failureReason: null, pointsEarned: 84 };
 
   it('lần đầu: lưu key cùng lần thanh toán', async () => {
     const { app, http, paymentCreate, paymentFindUnique } = await setup(pending);
@@ -157,7 +186,7 @@ describe('POST /payments với Idempotency-Key', () => {
 
     const res = await http().post('/payments').set('Idempotency-Key', 'pay-1').send(dto).expect(201);
 
-    expect(res.body).toEqual({ paymentId: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'PAID' });
+    expect(res.body).toEqual({ paymentId: 11, orderId: 'ord_1', method: 'WALLET', amount: 84000, status: 'PAID', pointsEarned: 84 });
     expect(paymentCreate).not.toHaveBeenCalled();
     await app.close();
   });
