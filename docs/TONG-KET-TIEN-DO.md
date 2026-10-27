@@ -14,7 +14,7 @@ Nhóm gồm 2 người, áp dụng mô hình Scrum chia thành 3 Sprint. Đến 
 
 - **10 Tasks nghiệp vụ chính thức**: Đều đã hoàn thành và merge vào nhánh `main`.
 - **3 Phần việc hoàn thiện thêm sau Sprint 3**: Triển khai CD/Vercel/Tunnel, sửa lỗi giao diện điện thoại (responsive & dark mode), và thêm log request cho backend.
-- **Quản lý mã nguồn**: Đã đóng 19 issues và tạo 49 Pull Requests trên GitHub. Tất cả các PR đều chạy qua hệ thống kiểm tra tự động (CI) trước khi merge.
+- **Quản lý mã nguồn**: Đã đóng 19 issues và tạo 52 Pull Requests trên GitHub. Tất cả các PR đều chạy qua hệ thống kiểm tra tự động (CI) trước khi merge.
 - **Backend**: Đạt 64/64 bài test bằng Vitest, không có lỗi lint (oxlint). Cơ sở dữ liệu PostgreSQL chạy qua Prisma migration ổn định.
 - **Frontend**: Xây dựng bằng Next.js 16 (Turbopack), không có lỗi TypeScript hay ESLint. Giao diện chạy được trên cả máy tính lẫn điện thoại.
 - **Chạy thử nghiệm**: Hệ thống có thể chạy toàn bộ ở máy cá nhân bằng một lệnh `docker compose up --build`, hoặc mở demo online qua link Vercel kết hợp Cloudflare Tunnel.
@@ -59,6 +59,7 @@ Sau khi xong 3 Sprint, nhóm tiếp tục xử lý các phần việc phát sinh
   - Thêm thuộc tính màu chữ `text-gray-900` cho tất cả các ô nhập liệu, xử lý lỗi chữ bị tàng hình màu trắng khi điện thoại bật giao diện tối (Dark mode) (PR #48).
   - Bổ sung middleware in log HTTP request của backend ra terminal để khi frontend gọi API thì terminal hiện rõ method, URL, status code và thời gian phản hồi (PR #49).
   - Viết thêm script `scripts/logs.sh` để tiện xem log container backend khi chạy ngầm.
+  - Xây dựng tính năng Cấu hình Server API động ngay trên giao diện web: tạo modal nhập link Cloudflare Tunnel và lưu vào `localStorage`, giúp người dùng test trên điện thoại kết nối ngay lập tức mà không cần cấu hình lại Vercel (PR #52).
 
 - **Task 13: Họp tổng kết Sprint (Retrospective) và chuẩn bị cho Assignment 2**
   - Họp đánh giá lại quá trình làm việc: ghi nhận các điểm làm tốt (CI tự động, viết test kỹ, làm việc bám sát task) và bài học kinh nghiệm (cần thống nhất hợp đồng API sớm để frontend và backend không bị lệch nhau); viết tài liệu `docs/RETROSPECTIVE.md` (PR #47).
