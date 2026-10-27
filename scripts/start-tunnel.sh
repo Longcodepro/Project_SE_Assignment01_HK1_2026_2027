@@ -21,6 +21,7 @@ else
             sleep 2
         done
         echo "✓ Backend đã sẵn sàng!"
+        echo "💡 Gợi ý: Để theo dõi log request HTTP của backend, mở terminal khác chạy: bash scripts/logs.sh"
     fi
 fi
 

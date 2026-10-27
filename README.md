@@ -71,7 +71,13 @@ Project_SE_Assignment01_HK1_2026_2027/
    ```bash
    docker compose up --build
    ```
-   Khi chạy lần đầu, container Backend sẽ tự động chạy Prisma Migration và nạp dữ liệu mẫu (Seed) vào cơ sở dữ liệu.
+   - Lệnh này sẽ khởi động toàn bộ hệ thống và hiển thị trực tiếp log ra terminal (bao gồm log HTTP request của Backend như `[HTTP] GET /products 200 - 15ms`).
+   - Khi chạy lần đầu, container Backend sẽ tự động chạy Prisma Migration và nạp dữ liệu mẫu (Seed) vào cơ sở dữ liệu.
+   - Nếu bạn khởi động ngầm (`docker compose up -d`), bạn có thể theo dõi log backend bất kỳ lúc nào bằng lệnh:
+     ```bash
+     bash scripts/logs.sh
+     # hoặc: docker compose logs -f backend
+     ```
 
 3. **Địa chỉ các dịch vụ:**
    | Service | Địa chỉ | Ghi chú |
