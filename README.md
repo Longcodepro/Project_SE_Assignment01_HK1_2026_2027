@@ -1,107 +1,121 @@
-# BrewLite
+# ☕ BrewLite — Cashless Coffee Ordering Platform
 
-Ứng dụng đặt cà phê không dùng tiền mặt — Đồ án môn **Công nghệ phần mềm** (Học kỳ 1, Năm học 2026–2027).
+> **Ứng dụng đặt cà phê trực tuyến không dùng tiền mặt**  
+> Đồ án môn **Công nghệ Phần mềm** — Học kỳ 1, Năm học 2026–2027
+
+[![CI Status](https://img.shields.io/badge/CI-Passed%20(6%2F6)-success?style=for-the-badge&logo=github-actions)](https://github.com/Longcodepro/Project_SE_Assignment01_HK1_2026_2027/actions)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/Backend-NestJS%2012-E0234E?style=for-the-badge&logo=nestjs)](https://nestjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2016-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/ORM-Prisma%207-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![Docker](https://img.shields.io/badge/Deployment-Docker%20Compose-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
 
 ---
 
-## 1. Giới thiệu dự án
+## 📌 1. Giới thiệu dự án
 
-**BrewLite** cung cấp giải pháp đặt đồ uống trực tuyến nhanh chóng, tiện lợi và hiện đại cho chuỗi cửa hàng cà phê. Toàn bộ quy trình từ xem menu, tùy chọn sản phẩm (size, topping), quản lý giỏ hàng, đặt đơn, thanh toán không tiền mặt (Ví điện tử / Thẻ ngân hàng) đến tra cứu lịch sử đơn hàng đều được thiết kế khép kín và tự động hóa.
+**BrewLite** là nền tảng đặt cà phê và đồ uống khép kín dành cho khách hàng hiện đại. Toàn bộ chu trình từ xem menu, tùy chọn sản phẩm (kích cỡ size, topping), quản lý giỏ hàng, đặt hàng, thanh toán điện tử (Ví/Thẻ) đến theo dõi lịch sử đơn hàng đều được tự động hóa đồng bộ giữa Web và API Backend.
 
-### Thành viên nhóm phát triển
+### 👥 Nhóm phát triển
 
-| Thành viên | Vai trò | GitHub |
+| Thành viên | Vai trò phụ trách | GitHub |
 |---|---|---|
-| **Nguyễn Thành Long** | Backend Developer, Scrum Master | [`Longcodepro`](https://github.com/Longcodepro) |
-| **Trần Vĩnh Tài** | Frontend Developer | [`TaiTran263`](https://github.com/TaiTran263) |
-
-### Công nghệ sử dụng
-
-- **Frontend:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack), [Tailwind CSS](https://tailwindcss.com/), [Zustand](https://github.com/pmndrs/zustand) (state management & local persistence), [Axios](https://axios-http.com/).
-- **Backend:** [NestJS 12](https://nestjs.com/) (ESM, TypeScript), [Prisma 7](https://www.prisma.io/) ORM, [PostgreSQL 16](https://www.postgresql.org/).
-- **Xác thực & Bảo mật:** JSON Web Token (`@nestjs/jwt`), `bcryptjs`, Khóa lạc quan (Optimistic Locking), Chống gửi trùng (`Idempotency-Key`).
-- **DevOps & Tooling:** Docker & Docker Compose, GitHub Actions (CI/CD), Vitest (backend testing), Oxlint & ESLint.
+| **Nguyễn Thành Long** | Backend Developer, Scrum Master, DevOps | [@Longcodepro](https://github.com/Longcodepro) |
+| **Trần Vĩnh Tài** | Frontend Developer, UI/UX Designer | [@TaiTran263](https://github.com/TaiTran263) |
 
 ---
 
-## 2. Cấu trúc thư mục
+## 🏗️ 2. Kiến trúc hệ thống & Luồng dữ liệu
 
 ```text
-Project_SE_Assignment01_HK1_2026_2027/
-├── backend/                  # Mã nguồn NestJS API & Prisma ORM
-│   ├── prisma/               # Schema dữ liệu, migrations SQL và seed mẫu
-│   ├── src/
-│   │   ├── auth/             # Module xác thực JWT, đăng ký & đăng nhập
-│   │   ├── common/           # Tiện ích chung, xử lý Idempotency, validation
-│   │   ├── orders/           # Quản lý đơn hàng, tính giá server, state machine
-│   │   ├── payments/         # Thanh toán Ví/Thẻ, tích điểm, khóa lạc quan
-│   │   └── products/         # Danh mục món, hiển thị menu
-│   └── postman/              # Postman collection & environment test API
-├── frontend/                 # Mã nguồn giao diện Next.js
-│   └── src/
-│       ├── app/              # Trang Next.js App Router (menu, cart, checkout, orders)
-│       ├── components/       # Component dùng chung (Navbar, Modal, ...)
-│       ├── services/         # Axios API Client gọi sang Backend
-│       └── store/            # Quản lý trạng thái giỏ hàng (Zustand)
-├── docs/                     # Tài liệu thiết kế & báo cáo tiến độ
-│   ├── API-CONTRACT.md       # Đặc tả hợp đồng giao tiếp API Frontend - Backend
-│   ├── HUONG-DAN-LAM-ISSUE.md # Quy trình Agile/Scrum, Git workflow & Definition of Done
-│   └── TienDoCongViec.tex    # Báo cáo tiến độ đồ án (LaTeX XeLaTeX)
-├── .github/                  # GitHub Actions CI workflow & Issue/PR Templates
-└── docker-compose.yml        # Cấu hình container chạy toàn bộ hệ thống
+ ┌────────────────────────┐              ┌───────────────────────────┐
+ │   Khách hàng (Web/App)  │              │     Triển khai Vercel     │
+ │   Desktop & Điện thoại │ <──────────> │   Next.js 16 (Port 4001)  │
+ └────────────────────────┘              └─────────────┬─────────────┘
+                                                       │ HTTPS Tunnel
+                                                       ▼
+ ┌───────────────────────────────────────────────────────────────────┐
+ │                     Môi trường Docker Container                   │
+ │                                                                   │
+ │   ┌───────────────────────┐            ┌──────────────────────┐   │
+ │   │   Cloudflare Tunnel   │ ─────────> │   Backend NestJS 12  │   │
+ │   │   (Đường hầm HTTPS)   │            │   (Cổng 4000)        │   │
+ │   └───────────────────────┘            └──────────┬───────────┘   │
+ │                                                   │ Prisma ORM    │
+ │                                                   ▼               │
+ │                                        ┌──────────────────────┐   │
+ │                                        │   PostgreSQL 16 DB   │   │
+ │                                        │   (Cổng 4002)        │   │
+ │                                        └──────────────────────┘   │
+ └───────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Cài đặt và chạy dự án
+## ⚡ 3. Hướng dẫn chạy hệ thống (Quick Start)
 
-### Yêu cầu tiên quyết
-- Cài đặt sẵn [Docker](https://docs.docker.com/get-docker/) và [Docker Compose](https://docs.docker.com/compose/).
-- Nếu chạy trực tiếp trên máy không dùng Docker: yêu cầu [Node.js 22+](https://nodejs.org/) và máy chủ PostgreSQL 16.
-
-### Cách 1: Chạy toàn bộ hệ thống bằng Docker Compose (Khuyên dùng)
-
-1. **Chuẩn bị biến môi trường:**
-   ```bash
-   cp .env.example .env
-   ```
-   *(File `.env` mặc định đã có cấu hình sẵn sàng cho môi trường phát triển local).*
-
-2. **Khởi động các dịch vụ:**
-   ```bash
-   docker compose up --build
-   ```
-   Khi chạy lần đầu, container Backend sẽ tự động chạy Prisma Migration và nạp dữ liệu mẫu (Seed) vào cơ sở dữ liệu.
-
-3. **Địa chỉ các dịch vụ:**
-   | Service | Địa chỉ | Ghi chú |
-   |---|---|---|
-   | **Frontend** | [http://localhost:4001](http://localhost:4001) | Giao diện web khách hàng |
-   | **Backend API** | [http://localhost:4000](http://localhost:4000) | REST API NestJS |
-   | **Swagger UI** | [http://localhost:4000/docs](http://localhost:4000/docs) | Tài liệu trực quan và test API |
-   | **PostgreSQL** | `localhost:4002` | Database (`brewlite_db`) |
-
-4. **Dừng hệ thống:**
-   ```bash
-   docker compose down
-   # Hoặc xóa cả volume dữ liệu để chạy lại từ đầu:
-   docker compose down -v
-   ```
+### Yêu cầu môi trường
+- Đã cài đặt [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/).
+- Nếu chạy trực tiếp trên máy không qua Docker: yêu cầu [Node.js 22+](https://nodejs.org/) và PostgreSQL 16.
 
 ---
 
-### Cách 2: Chạy cục bộ từng dịch vụ (Dành cho Developer)
+### 🚀 Cách 1: Khởi động 1-chạm bằng Docker Compose (Khuyên dùng)
+
+Đây là cách chạy chuẩn nhất để kiểm thử toàn bộ hệ thống (Frontend + Backend + Database) chỉ bằng 1 lệnh duy nhất:
+
+```bash
+# 1. Sao chép cấu hình môi trường
+cp .env.example .env
+
+# 2. Khởi động toàn bộ các dịch vụ và hiển thị log trực tiếp ra màn hình
+docker compose up --build
+```
+
+> 💡 **Tính năng nổi bật khi chạy lệnh này:**
+> - Hệ thống tự động biên dịch container, chạy Prisma Migration tạo bảng và nạp dữ liệu mẫu (Seed) vào cơ sở dữ liệu.
+> - **Live HTTP Request Logging**: Mọi thao tác click chuột trên web (đăng nhập, xem món, đặt hàng, thanh toán) đều được in trực tiếp ra màn hình terminal kèm method, URL, status code và thời gian phản hồi (ms).
+
+#### Tiện ích quản lý:
+```bash
+# Nếu chạy ngầm (-d), theo dõi log backend bất kỳ lúc nào bằng script:
+bash scripts/logs.sh
+
+# Dừng hệ thống:
+docker compose down
+
+# Dừng và xóa toàn bộ dữ liệu database để chạy lại từ đầu:
+docker compose down -v
+```
+
+---
+
+### 🌐 Cách 2: Chạy Demo Online (Vercel + Cloudflare Tunnel)
+
+Phù hợp cho việc trình diễn demo từ xa hoặc mở trang web trên điện thoại thật mà không cần mở cổng modem mạng:
+
+1. **Khởi động Backend và Database:**
+   ```bash
+   docker compose up -d backend db
+   ```
+
+2. **Khởi tạo đường hầm HTTPS ra ngoài Internet:**
+   ```bash
+   bash scripts/start-tunnel.sh
+   ```
+   Hệ thống sẽ cấp một địa chỉ HTTPS công khai (ví dụ: `https://brewlite-demo.trycloudflare.com`).
+
+3. **Kết nối:** Dán đường link trên vào biến môi trường `NEXT_PUBLIC_API_URL` trên Vercel để trải nghiệm web thật tại bất cứ đâu.
+
+---
+
+### 💻 Cách 3: Chạy thủ công từng phần (Dành cho Developer)
 
 #### Chạy Backend:
 ```bash
 cd backend
 npm ci
-
-# Thiết lập database (nếu chạy Postgres cục bộ):
-npx prisma migrate deploy
-npx prisma db seed
-
-# Chạy backend ở chế độ watch:
+npx prisma migrate deploy && npx prisma db seed
 PORT=4000 npm run start:dev
 ```
 
@@ -109,76 +123,115 @@ PORT=4000 npm run start:dev
 ```bash
 cd frontend
 npm ci
-
-# Chạy Next.js dev server ở cổng 4001:
-NEXT_PUBLIC_API_URL=http://localhost:4000 npm run dev -- -p 4001
+NEXT_PUBLIC_API_URL=http://localhost:4000 npx next dev -p 3000
 ```
 
 ---
 
-## 4. Kiểm thử và Kiểm tra chất lượng (CI Checks)
+## 🌐 4. Bảng tra cứu cổng & Địa chỉ dịch vụ
 
-Trước khi tạo commit và mở Pull Request, toàn bộ mã nguồn phải vượt qua các bài kiểm tra tự động tương đương với quy trình GitHub Actions CI:
-
-### Backend
-```bash
-cd backend
-npm run lint          # Kiểm tra code style & type bằng oxlint
-npm run build         # Biên dịch NestJS và sinh Prisma Client
-npm test              # Chạy 64 unit test cases với Vitest
-```
-
-### Frontend
-```bash
-cd frontend
-npm run lint          # Kiểm tra mã nguồn với ESLint
-npm run build         # Kiểm tra biên dịch Next.js (Turbopack)
-```
+| Dịch vụ | Địa chỉ truy cập | Mô tả chức năng |
+|---|---|---|
+| **Frontend Web** | [http://localhost:4001](http://localhost:4001) | Giao diện đặt cà phê cho khách hàng |
+| **Backend REST API** | [http://localhost:4000](http://localhost:4000) | Máy chủ API NestJS |
+| **Swagger UI Docs** | [http://localhost:4000/docs](http://localhost:4000/docs) | Tài liệu kiểm thử API tương tác trực quan |
+| **PostgreSQL Database** | `localhost:4002` | Cơ sở dữ liệu quan hệ (`brewlite_db`) |
 
 ---
 
-## 5. Danh sách API Backend
+## 🧪 5. Dữ liệu mẫu kiểm thử Demo
 
-Chi tiết từng tham số request, response mẫu và mã lỗi được chuẩn hóa tại [`docs/API-CONTRACT.md`](docs/API-CONTRACT.md) và Swagger UI tại [`http://localhost:4000/docs`](http://localhost:4000/docs).
+Hệ thống đã chuẩn bị sẵn các kịch bản kiểm thử nhanh để giảng viên và người đánh giá tiện theo dõi:
 
-| Phương thức | Endpoint | Yêu cầu xác thực | Chức năng |
-|---|---|---|---|
-| `GET` | `/` | Không | Health-check backend (`Hello World!`) |
-| `GET` | `/products` | Không | Danh sách sản phẩm menu, giá gốc, hình ảnh |
-| `POST` | `/auth/register` | Không | Đăng ký tài khoản mới (băm mật khẩu `bcryptjs`) |
-| `POST` | `/auth/login` | Không | Đăng nhập hệ thống, cấp `accessToken` (JWT) |
-| `POST` | `/orders` | `Bearer Token` | Tạo đơn hàng mới (`PENDING`), tính tổng tiền trên server, hỗ trợ header `Idempotency-Key` |
-| `GET` | `/orders/me` | `Bearer Token` | Xem lịch sử đơn hàng của tài khoản đang đăng nhập |
-| `POST` | `/payments` | `Bearer Token` | Thanh toán không tiền mặt (Ví/Thẻ), chuyển trạng thái đơn hàng, khóa lạc quan `version`, tích điểm |
+### 1. Tài khoản đăng nhập mẫu:
+- **Email:** `long@test.com`
+- **Mật khẩu:** `matkhau123`  
+*(Trên modal Đăng nhập có sẵn nút bấm **"⚡ Dùng tài khoản mẫu kiểm thử"** để tự động điền nhanh).*
 
-### Quy tắc nghiệp vụ cốt lõi
+### 2. Kịch bản thanh toán mô phỏng (Mock Gateway):
+- **Thẻ ngân hàng (`CARD`):**
+  - Số thẻ có đuôi khác `0000` (ví dụ: `9704000000001234`) ➔ **Thanh toán thành công** (chuyển trạng thái đơn sang `PAID`).
+  - Số thẻ có đuôi `0000` (ví dụ: `9704000000000000`) ➔ **Thanh toán thất bại** (mô phỏng thẻ bị từ chối, đơn chuyển sang `PAYMENT_FAILED` và cho phép thử lại).
+- **Ví điện tử (`WALLET`):**
+  - Đơn hàng $\le$ 500.000đ ➔ **Thành công**.
+  - Đơn hàng > 500.000đ ➔ **Báo lỗi vượt hạn mức ví**.
+- **Tích điểm thành viên:** Mỗi 1.000đ giá trị thanh toán thành công tự động tích lũy 1 điểm loyalty vào tài khoản khách hàng.
 
-1. **Bảo mật giá (Server-side Pricing):** Client tuyệt đối không gửi giá tiền lên. Server tự tính tổng tiền dựa trên công thức:
+---
+
+## 📊 6. Danh mục API RESTful
+
+Đặc tả chi tiết schema request/response được chuẩn hóa tại [`docs/API-CONTRACT.md`](docs/API-CONTRACT.md) và tài liệu Swagger UI tại `http://localhost:4000/docs`:
+
+| Method | Endpoint | Xác thực | Mô tả chức năng |
+|:---:|---|:---:|---|
+| `GET` | `/` | Public | Health-check hệ thống |
+| `GET` | `/products` | Public | Lấy danh mục sản phẩm, giá gốc và hình ảnh |
+| `POST` | `/auth/register` | Public | Đăng ký tài khoản (băm mật khẩu `bcryptjs`) |
+| `POST` | `/auth/login` | Public | Đăng nhập hệ thống, cấp mã thông báo JWT |
+| `POST` | `/orders` | Bearer Token | Tạo đơn hàng mới (`PENDING`), tính tiền tự động trên server, hỗ trợ header `Idempotency-Key` |
+| `GET` | `/orders/me` | Bearer Token | Lấy danh sách lịch sử đơn hàng của người dùng hiện tại |
+| `POST` | `/payments` | Bearer Token | Thanh toán mô phỏng (Ví/Thẻ), khóa lạc quan `version`, tích điểm thành viên |
+
+### 🔒 Các quy tắc nghiệp vụ cốt lõi:
+1. **Server-side Pricing:** Client tuyệt đối không gửi giá tiền. Server tự động tính tổng tiền theo công thức:
    $$\text{Tổng tiền} = \sum (\text{Số lượng} \times (\text{Giá gốc} + \text{Phụ thu size} + \text{Giá topping}))$$
    - Size: S (+0đ), M (+5.000đ), L (+10.000đ).
-   - Topping: Trân châu (8.000đ), Kem cheese (10.000đ), Thạch cafe (6.000đ).
-2. **Order State Machine:** Vòng đời đơn hàng tuân thủ trạng thái:
-   - `PENDING` ➔ `PAID` (Thành công)
-   - `PENDING` ➔ `PAYMENT_FAILED` (Thất bại)
-   - `PAYMENT_FAILED` ➔ `PAID` (Cho phép khách hàng thử thanh toán lại)
-   - Đơn đã `PAID` không được chuyển sang bất kỳ trạng thái nào khác.
-3. **Mô phỏng Cổng thanh toán (Mock Gateway):**
-   - Thẻ ngân hàng (`CARD`): Bắt buộc số thẻ; thẻ có 4 chữ số tận cùng là `0000` sẽ bị từ chối giao dịch.
-   - Ví điện tử (`WALLET`): Từ chối các đơn hàng có giá trị vượt quá 500.000đ.
-4. **Khóa lạc quan (Optimistic Locking):** Đơn hàng có trường `version`. Mỗi lần thanh toán hoặc cập nhật đơn đều kiểm tra và tăng `version` nhằm ngăn chặn xung đột thanh toán đồng thời (Race Condition).
-5. **Chống gửi trùng (Idempotency):** Hỗ trợ header tùy chọn `Idempotency-Key` cho cả `POST /orders` và `POST /payments`, trả về kết quả cũ kèm `X-Cache: HIT` nếu gửi lặp lại yêu cầu.
-6. **Chương trình khách hàng thân thiết (Loyalty):** Tích lũy 1 điểm cho mỗi 1.000đ giá trị thanh toán thành công.
+   - Topping: Trân châu (+8.000đ), Kem cheese (+10.000đ), Thạch cafe (+6.000đ).
+2. **Order State Machine:** Đơn hàng chỉ được chuyển từ `PENDING ➔ PAID | PAYMENT_FAILED`, cho phép thử lại `PAYMENT_FAILED ➔ PAID`, chặn mọi bước chuyển trạng thái sai.
+3. **Idempotency (`Idempotency-Key`):** Ngăn chặn việc gửi trùng đơn hàng hoặc trừ tiền lặp lại khi mạng lag, trả về kết quả cũ kèm header `X-Cache: HIT`.
+4. **Optimistic Locking (`version`):** Ngăn chặn tranh chấp cập nhật đồng thời (Race Condition) bằng mã lỗi `409 Conflict`.
 
 ---
 
-## 6. Kịch bản Demo End-to-End
+## 🛠️ 7. Kiểm tra chất lượng mã nguồn & CI
 
-Quy trình trải nghiệm hoàn chỉnh của khách hàng:
+Quy trình tự động hóa GitHub Actions CI sẽ tự động kích hoạt mỗi khi có Pull Request và chạy kiểm tra **6/6 tiêu chí**:
 
-1. **Xem thực đơn:** Khách hàng truy cập trang chủ [http://localhost:4001](http://localhost:4001), duyệt danh sách các món cà phê và trà được tải từ API `/products`.
-2. **Tùy chọn món:** Bấm vào một món để mở modal chi tiết: chọn kích cỡ ly (S, M, L) và các món kèm (trân châu, kem cheese, thạch cafe). Giá tổng cập nhật theo thời gian thực.
-3. **Quản lý giỏ hàng:** Thêm món vào giỏ hàng. Tại trang `/cart`, người dùng có thể điều chỉnh số lượng ly hoặc xóa món. Dữ liệu giỏ hàng được tự động đồng bộ qua `localStorage`.
-4. **Đặt đơn hàng:** Bấm nút thanh toán, hệ thống gửi dữ liệu giỏ hàng lên `POST /orders`. Backend xác thực và tạo đơn ở trạng thái `PENDING`.
-5. **Thanh toán không tiền mặt:** Tại trang `/checkout`, người dùng chọn hình thức thanh toán Ví điện tử (`WALLET`) hoặc Thẻ tín dụng/ghi nợ (`CARD`). Hệ thống gọi `POST /payments` để hoàn tất giao dịch.
-6. **Xác nhận & Tích điểm:** Màn hình `/order-success` hiển thị thông báo thành công cùng số điểm loyalty tích lũy được.
-7. **Lịch sử đơn hàng:** Khách hàng vào trang `/orders` để tra cứu lại toàn bộ danh sách các đơn đã đặt và theo dõi trạng thái đơn hàng.
+```bash
+# Kiểm tra phía Backend:
+cd backend
+npm run lint          # Kiểm tra type và coding convention bằng oxlint (0 warning, 0 error)
+npm run build         # Biên dịch mã nguồn NestJS & Prisma Client
+npm test              # Chạy 64 bài unit test với Vitest (100% passed)
+
+# Kiểm tra phía Frontend:
+cd frontend
+npm run lint          # Kiểm tra chuẩn React 19 / Next.js 16 với ESLint
+npm run build         # Biên dịch tĩnh toàn bộ 8 trang web với Next.js Turbopack
+```
+
+---
+
+## 📁 8. Cấu trúc thư mục dự án
+
+```text
+Project_SE_Assignment01_HK1_2026_2027/
+├── backend/                  # NestJS API & Prisma ORM
+│   ├── prisma/               # Database schema, migrations SQL và seed dữ liệu
+│   ├── src/                  # Controllers, Services, Middleware HTTP logger, Guards
+│   └── postman/              # Postman collection & environment test API
+├── frontend/                 # Ứng dụng Next.js 16 App Router
+│   └── src/
+│       ├── app/              # Trang giao diện: /, /cart, /checkout, /orders
+│       ├── components/       # Components: Navbar, AuthModal, ProductDetailModal
+│       ├── services/         # Axios API Client kết nối Backend
+│       └── store/            # Quản lý trạng thái Zustand: useCartStore, useAuthStore
+├── scripts/                  # Bộ script tiện ích tự động hóa
+│   ├── logs.sh               # Stream log Backend theo thời gian thực
+│   └── start-tunnel.sh       # Khởi tạo Cloudflare Tunnel HTTPS phục vụ demo
+├── docs/                     # Tài liệu thiết kế & báo cáo tiến độ
+│   ├── API-CONTRACT.md       # Hợp đồng giao tiếp API
+│   ├── RETROSPECTIVE.md      # Biên bản họp Retrospective 3 Sprint
+│   ├── TienDoCongViec.tex    # File LaTeX báo cáo tiến độ đồ án
+│   ├── TienDoCongViec.pdf    # Báo cáo tiến độ hoàn chỉnh (14 trang A4)
+│   └── TONG-KET-TIEN-DO.md   # Báo cáo tổng kết tiến độ đồ án
+├── .github/workflows/        # CI/CD Workflows (ci.yml, cd.yml)
+└── docker-compose.yml        # Khởi động toàn bộ hệ thống bằng Docker
+```
+
+---
+
+## 📄 9. Bản quyền & Giấy phép
+
+Đồ án được thực hiện phục vụ học tập và nghiên cứu môn **Công nghệ Phần mềm** tại trường Đại học. Mọi quyền được bảo lưu bởi nhóm phát triển.
