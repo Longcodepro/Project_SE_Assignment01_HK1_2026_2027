@@ -60,16 +60,27 @@ function OrderSuccessContent(){
                     <Clock className="w-4 h-4 text-amber-700 animate-spin" style={{ animationDuration: '6s' }} />
                     <span>Barista đang pha chế, mời bạn tới quầy nhận nước sau 3-5 phút!</span>
                 </div>
+                
+                {/* CỤM NÚT ĐIỀU HƯỚNG */}
+                <div className="w-full space-y-2.5">
+                    {/* Nút theo dõi tiến độ đơn hàng */}
+                    <Link
+                        href="/orders"
+                        className="w-full bg-emerald-700 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold py-3 px-6 rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-sm"
+                    >
+                        <Clock className="w-4 h-4 text-emerald-200" />
+                        <span>Theo dõi tiến độ đơn hàng</span>
+                    </Link>
 
-                {/* NÚT VỀ TRANG CHỦ */}
-                <Link
-                    href="/"
-                    className="w-full bg-amber-900 hover:bg-amber-800 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm"
-                >
-                    <Coffee className="w-4 h-4 text-amber-300" />
-                    <span>Về trang chủ chọn thêm món</span>
-                </Link>
-
+                    {/* NÚT VỀ TRANG CHỦ */}
+                    <Link
+                        href="/"
+                        className="w-full bg-amber-900 hover:bg-amber-800 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm"
+                    >
+                        <Coffee className="w-4 h-4 text-amber-300" />
+                        <span>Về trang chủ chọn thêm món</span>
+                    </Link>
+                </div>
             </div>
         </div>
     );

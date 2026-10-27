@@ -86,7 +86,7 @@ export default function CheckoutPage(){
         }catch(err: unknown){
             //thất bại thì giữ nguyên giỏ hàng
             const msg = err instanceof Error ? err.message:'Thanh toán không thành công';
-           ;
+            setErrorMsg(msg);
         }finally{
             setLoading(false);
         }
