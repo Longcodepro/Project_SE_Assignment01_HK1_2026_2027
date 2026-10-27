@@ -9,8 +9,26 @@ async function bootstrap() {
   });
   setupSwagger(app);
   app.useGlobalPipes(createValidationPipe());
+
+  const rawFrontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4001';
+  const allowedOrigins = rawFrontendUrl.split(',').map((u) => u.trim());
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:4001',
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.includes('*') ||
+        origin.endsWith('.vercel.app')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+    credentials: true,
   });
   await app.listen(process.env.PORT ?? 4000);
 }
