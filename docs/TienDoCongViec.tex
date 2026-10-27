@@ -385,4 +385,115 @@
     \hline
 \end{tabularx}
 
+\vspace{0.8cm}
+
+% ==================== CÁC CÔNG VIỆC HOÀN THIỆN SAU SPRINT 3 ====================
+\begin{center}
+    \Large\textbf{CÁC CÔNG VIỆC HOÀN THIỆN VÀ TRIỂN KHAI SAU SPRINT 3}\\
+    \large\textit{(Ghi nhận các công việc bổ sung chuẩn bị nộp bài và chuyển giao sang Assignment 2)}
+\end{center}
+
+\vspace{0.4cm}
+
+% ==================== TASK 11 ====================
+\subsection*{Task 11: Đóng gói CD, cấu hình Cloudflare Tunnel và triển khai thử nghiệm Vercel}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 27/10/2026 & Đóng gói Docker Image backend lên GHCR &
+    - Long viết workflow GitHub Actions tự động build và push Docker image của backend lên GitHub Container Registry (GHCR); hoàn thành issue \#18, merge Pull Request \#45 vào \texttt{main} lúc 14:10 \\
+    \hline
+
+    2 & 27/10/2026 & Cấu hình Cloudflare Tunnel phục vụ demo &
+    - Long viết script \texttt{scripts/start-tunnel.sh} chạy Cloudflare Tunnel để mở URL HTTPS cho backend đang chạy ở máy local, giúp frontend trên Vercel có thể gọi API thật trong quá trình demo mà không cần mở cổng modem mạng \\
+    \hline
+
+    3 & 27/10/2026 & Triển khai Frontend lên Vercel &
+    - Long và Tài cấu hình đưa frontend Next.js lên Vercel, cài biến môi trường \texttt{NEXT\_PUBLIC\_API\_URL} trỏ về URL tunnel, bật tính năng xem trước (preview deployment) cho từng Pull Request \\
+    \hline
+
+    4 & 27/10/2026 & Hoàn thiện README và kịch bản demo &
+    - Long cập nhật lại file \texttt{README.md} hướng dẫn chi tiết cách cài đặt môi trường, chạy hệ thống bằng Docker Compose, xem tài liệu Swagger và các bước demo luồng đặt hàng; đóng issue \#19 (Pull Request \#43, \#44) \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+% ==================== TASK 12 ====================
+\subsection*{Task 12: Tối ưu giao diện trên điện thoại và bổ sung log backend ra terminal}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 27/10/2026 & Tối ưu Responsive trên thiết bị di động &
+    - Tài chỉnh lại CSS responsive cho 6 màn hình/thành phần trên điện thoại: thu gọn thanh navbar, modal chọn món và modal đăng nhập có giới hạn chiều cao \texttt{max-h-[92vh]} để không bị bàn phím ảo che mất nút, giỏ hàng và trang thanh toán không bị tràn viền; mở Pull Request \#48 \\
+    \hline
+
+    2 & 27/10/2026 & Sửa lỗi màu chữ ô nhập trong Dark mode &
+    - Tài và Long bổ sung thuộc tính màu chữ \texttt{text-gray-900} và \texttt{placeholder:text-gray-400} cho toàn bộ các ô input (họ tên, email, mật khẩu, số thẻ), xử lý dứt điểm lỗi chữ bị tàng hình màu trắng khi điện thoại bật giao diện tối (Dark mode) \\
+    \hline
+
+    3 & 27/10/2026 & Bổ sung log HTTP request của Backend &
+    - Long thêm middleware ghi log trong \texttt{backend/src/main.ts} để mỗi khi có request từ frontend thì backend tự động in method, đường dẫn, mã trạng thái HTTP và thời gian phản hồi ra terminal để tiện theo dõi; mở Pull Request \#49 \\
+    \hline
+
+    4 & 27/10/2026 & Viết script xem log Docker tiện lợi &
+    - Long viết thêm script \texttt{scripts/logs.sh} giúp stream log của container backend nhanh chóng khi chạy nền; cập nhật lại hướng dẫn trong \texttt{README.md} và \texttt{start-tunnel.sh} \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+% ==================== TASK 13 ====================
+\subsection*{Task 13: Họp tổng kết Sprint (Retrospective) và chuẩn bị cho Assignment 2}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 27/10/2026 & Biên bản họp Sprint Retrospective &
+    - Nhóm họp đánh giá lại quá trình làm việc của 3 Sprint theo Scrum: ghi nhận các điểm làm tốt (CI tự động, viết test đầy đủ, giao diện chạy ổn) và các bài học kinh nghiệm (cần trao đổi kỹ hợp đồng API trước khi code); lập tài liệu \texttt{docs/RETROSPECTIVE.md}; Pull Request \#47 \\
+    \hline
+
+    2 & 27/10/2026 & Thống kê tiến độ và năng suất làm việc &
+    - Nhóm 2 người duy trì tốc độ làm việc ổn định (trung bình 13–15 story points/sprint), hoàn thành toàn bộ mục tiêu của từng Sprint; theo dõi tiến độ công việc minh bạch qua GitHub Issues và Pull Requests \\
+    \hline
+
+    3 & 27/10/2026 & Chuẩn bị kế hoạch cho Assignment 2 &
+    - Đọc đề và lên danh sách các công việc cần làm cho Assignment 2: chuyển cấu trúc sang monorepo (\texttt{apps/web}, \texttt{apps/api}), viết tài liệu SRS, vẽ sơ đồ UML (Use Case, Activity, Sequence, Class), viết tài liệu kiến trúc ADR \\
+    \hline
+
+    4 & 27/10/2026 & Cập nhật báo cáo tiến độ nộp bài &
+    - Long và Tài cập nhật lại file báo cáo \texttt{docs/TienDoCongViec.tex}, biên dịch ra file \texttt{TienDoCongViec.pdf} bằng XeLaTeX để nộp báo cáo tiến độ đồ án \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\begin{tabularx}{\textwidth}{|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{TỔNG KẾT ĐỒ ÁN ASSIGNMENT 1 (CẬP NHẬT 27/10/2026)} \\
+    \hline
+    - \textbf{Khối lượng công việc}: Hoàn thành đầy đủ 10 Tasks nghiệp vụ chính và 3 phần việc hoàn thiện thêm (CD, giao diện mobile, logging). Đã xử lý xong 19 issues và tạo 49 Pull Requests trên GitHub. \newline
+    - \textbf{Chất lượng mã nguồn}: \newline
+    \quad $\bullet$ Backend: 8 bộ kiểm thử với 64/64 test cases chạy qua bằng Vitest; 0 lỗi lint qua oxlint; Prisma migration tạo cơ sở dữ liệu PostgreSQL ổn định. \newline
+    \quad $\bullet$ Frontend: Viết bằng Next.js 16 (Turbopack), biên dịch 8/8 trang không có lỗi TypeScript hay ESLint; giao diện responsive chạy tốt trên cả máy tính lẫn điện thoại. \newline
+    \quad $\bullet$ CI/CD: 100\% các Pull Request đều vượt qua 6/6 bài kiểm tra tự động của GitHub Actions và Vercel. \newline
+    - \textbf{Môi trường vận hành}: \newline
+    \quad $\bullet$ Chạy local: Toàn bộ hệ thống khởi động dễ dàng bằng một lệnh \texttt{docker compose up -{}-build}, có log HTTP request hiển thị trực tiếp ở terminal. \newline
+    \quad $\bullet$ Chạy thử nghiệm online: Frontend chạy trên Vercel kết nối với Backend local qua Cloudflare Tunnel phục vụ việc demo. \newline
+    - \textbf{Đánh giá chung}: Nhóm 2 người (Long và Tài) đã hoàn thành tốt các yêu cầu của Assignment 1, hệ thống chạy mượt mà, tài liệu rõ ràng và đã sẵn sàng bắt tay vào làm Assignment 2. \\
+    \hline
+\end{tabularx}
+
 \end{document}
