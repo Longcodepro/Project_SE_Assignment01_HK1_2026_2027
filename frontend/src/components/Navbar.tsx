@@ -1,16 +1,19 @@
 'use client';
 
 import Link from "next/link";
-import { Coffee, ShoppingBag, Clock, ReceiptText } from 'lucide-react';
+import { Coffee, ShoppingBag, Clock, ReceiptText, User as UserIcon, LogIn, LogOut } from 'lucide-react';
 import { useCartStore } from "@/store/useCartStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import AuthModal from "@/components/AuthModal";
 import { useSyncExternalStore } from "react";
 
-
 export default function Navbar() {
-    const totalItems = useCartStore((state)=>state.getTotalItems());
+    const totalItems = useCartStore((state) => state.getTotalItems());
+    const { token, user, openAuthModal, logout } = useAuthStore();
 
-    //tránh lỗi mất đồng bộ
+    // Tránh lỗi hydration mismatch giữa SSR và Client
     const isClient = useSyncExternalStore(() => () => {}, () => true, () => false);
+
     return (
         <header className="sticky top-0 z-40 bg-[#2C1810]/95 backdrop-blur-md text-white border-b border-[#4A2E1B] shadow-md transition-all">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
@@ -49,8 +52,36 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Cụm nút Đơn hàng & Giỏ hàng góc phải */}
-                <div className="flex items-center gap-2.5 sm:gap-3">
+                {/* Cụm nút Đăng nhập, Đơn hàng & Giỏ hàng góc phải */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {/* NÚT TÀI KHOẢN / ĐĂNG NHẬP (TASK 7 FE) */}
+                    {isClient && token ? (
+                        <div className="flex items-center gap-1.5 bg-[#3E2314]/90 border border-[#57341B] rounded-full p-1 pl-3 shadow-sm">
+                            <div className="flex items-center gap-1.5 text-xs text-[#FAF7F2] max-w-[120px] sm:max-w-[160px] truncate">
+                                <UserIcon className="w-3.5 h-3.5 text-[#D4A373] shrink-0" />
+                                <span className="font-semibold truncate">
+                                    {user?.name || user?.email?.split('@')[0] || 'Thành viên'}
+                                </span>
+                            </div>
+                            <button
+                                onClick={logout}
+                                title="Đăng xuất tài khoản"
+                                className="p-1.5 hover:bg-[#57341B] text-amber-200/80 hover:text-white rounded-full transition"
+                            >
+                                <LogOut className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => openAuthModal('login')}
+                            className="flex items-center gap-1.5 bg-[#3E2314]/80 hover:bg-[#57341B] border border-[#57341B] hover:border-[#8C5835] text-[#FAF7F2] px-3.5 py-2 rounded-full transition active:scale-95 shadow-sm text-xs font-bold"
+                            title="Đăng ký hoặc Đăng nhập tài khoản"
+                        >
+                            <LogIn className="w-3.5 h-3.5 text-[#D4A373]" />
+                            <span className="hidden sm:inline">Đăng nhập</span>
+                        </button>
+                    )}
+
                     {/* NÚT LỊCH SỬ ĐƠN HÀNG (TASK 9) */}
                     <Link
                         href="/orders"
@@ -84,8 +115,9 @@ export default function Navbar() {
                     </Link>
                 </div>
             </div>
+
+            {/* Modal Đăng nhập / Đăng ký */}
+            <AuthModal />
         </header>
     );
 }
-
-

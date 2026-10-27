@@ -1,36 +1,39 @@
 'use client';
 
-import {useState} from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { apiService } from '@/services/api';
-import { ArrowLeft, CreditCard, Wallet, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Wallet, ShieldCheck, Loader2, AlertCircle, LogIn } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 
 export default function CheckoutPage(){
     const router = useRouter();
-    const isClient = useSyncExternalStore(()=>()=>{}, ()=>true, ()=>false);
+    const isClient = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-    const {items, getTotalPrice, clearCart} = useCartStore();
+    const { items, getTotalPrice, clearCart } = useCartStore();
+    const { token, user, openAuthModal } = useAuthStore();
 
-    //trạng thái chọn phương thức:WALLET HOẶC CARD
-    const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'CARD'> ('WALLET') //WALLET LÀ VÍ ĐIỆN TỬ NHƯ MOMO HOẶC VNPAY
+    // Trạng thái chọn phương thức: WALLET HOẶC CARD
+    const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'CARD'>('WALLET');
+    const [cardNumber, setCardNumber] = useState<string>('9704000000000001');
 
-    //nút giả lập để test lỗi
+    // Nút giả lập để test lỗi khi demo
     const [simulateFail, setSimulateFail] = useState<boolean>(false);
 
     const [loading, setLoading] = useState<boolean>(false);
-    const [errorMsg, setErrorMsg] = useState<string |null>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    if(!isClient) return null;
+    if (!isClient) return null;
     
     const totalPrice = getTotalPrice();
 
-    //nếu giỏ hàng trống, chuyển khách về lại menu
-    if(items.length === 0 ) {
-        return(
+    // Nếu giỏ hàng trống, chuyển khách về lại menu
+    if (items.length === 0) {
+        return (
             <div className="min-h-screen bg-[#FAF7F2] flex flex-col">
                 <Navbar />
                 <div className="max-w-md mx-auto text-center py-20 px-4">
@@ -43,56 +46,62 @@ export default function CheckoutPage(){
         );
     }
 
-    //hàm xử lý khi bấm xác nhận thanh toán
-    const handlePayment = async ()=>{
-        try{
+    // Hàm xử lý khi bấm xác nhận thanh toán
+    const handlePayment = async () => {
+        try {
             setLoading(true);
             setErrorMsg(null);
 
-            //demo bị lỗi
-            if(simulateFail){
-                throw new Error ('Mô phỏng thanh toán thất bại: số dư tài khoản không đủ hoặc thẻ bị khóa');
+            // Bắt buộc đăng nhập để gắn userId vào đơn và tích điểm
+            if (!token) {
+                openAuthModal('login');
+                throw new Error('Vui lòng đăng nhập để hoàn tất tạo đơn và thanh toán');
+            }
+
+            // Demo bị lỗi thủ công
+            if (simulateFail) {
+                throw new Error('Mô phỏng thanh toán thất bại: số dư tài khoản không đủ hoặc thẻ bị khóa');
             }
 
             const payload = {
-                items: items.map((item)=>({
+                items: items.map((item) => ({
                     productId: item.product.id,
                     size: item.size,
                     quantity: item.quantity,
-                    toppings:item.toppings,
+                    toppings: item.toppings,
                 })),
                 paymentMethod,
+                cardNumber: paymentMethod === 'CARD' ? cardNumber.trim() : undefined,
             };
+
             let resultOrder;
 
-            try{
-                //thử gọi backend
+            try {
+                // Thử gọi backend NestJS thật
                 resultOrder = await apiService.createOrderAndPay(payload);
-            }catch (beErr){
-                //dự phòng Mock khi back end chưa bật
-                console.warn('Backend chưa bật, sử dụng thanh toán giả lập:', beErr );
-                resultOrder={
-                    orderId: `ord_${Math.floor(1000+Math.random()*9000)}`,
-                    status:'PAID',
-                    total:totalPrice,
-                };
+            } catch (beErr: unknown) {
+                // Nếu backend offline hoặc lỗi khác, ném lỗi thật để người dùng biết
+                console.error('Lỗi khi gọi API thanh toán backend:', beErr);
+                throw beErr;
             }
-            if(resultOrder.status !== 'PAID'){
-                throw new Error('Thanh toán thất bại (PAYMENT_FAILED).')
+
+            if (resultOrder.status !== 'PAID') {
+                throw new Error('Thanh toán thất bại (PAYMENT_FAILED). Vui lòng thử lại.');
             }
-            //Nếu thanh toán thành công, clean và chuyển sang màn hình xác nhận
+
+            // Nếu thanh toán thành công, làm sạch giỏ hàng và chuyển sang màn hình xác nhận
             clearCart();
-            router.push(`/order-success?orderId=${resultOrder.orderId}&total=${resultOrder.total}&method=${paymentMethod}`)
-        }catch(err: unknown){
-            //thất bại thì giữ nguyên giỏ hàng
-            const msg = err instanceof Error ? err.message:'Thanh toán không thành công';
+            router.push(`/order-success?orderId=${resultOrder.orderId}&total=${resultOrder.total}&method=${paymentMethod}`);
+        } catch (err: unknown) {
+            // Thất bại thì giữ nguyên giỏ hàng
+            const msg = err instanceof Error ? err.message : 'Thanh toán không thành công';
             setErrorMsg(msg);
-        }finally{
+        } finally {
             setLoading(false);
         }
     };
     
-    return(
+    return (
         <div className="min-h-screen bg-[#FAF7F2] text-gray-900 font-sans flex flex-col">
             <Navbar />
 
@@ -110,12 +119,34 @@ export default function CheckoutPage(){
                     Thanh toán đơn hàng
                 </h1>
 
+                {/* BANNER NHẮC ĐĂNG NHẬP (NẾU CHƯA ĐĂNG NHẬP) */}
+                {!token && (
+                    <div className="bg-amber-100/70 border-2 border-amber-300/80 rounded-2xl p-4 mb-6 flex items-center justify-between gap-3 text-amber-950 animate-in fade-in">
+                        <div className="text-xs">
+                            <p className="font-extrabold text-sm text-amber-900 flex items-center gap-1.5">
+                                <LogIn className="w-4 h-4 text-amber-700" />
+                                Bạn chưa đăng nhập tài khoản
+                            </p>
+                            <p className="text-amber-800/90 mt-0.5">
+                                Đăng nhập để đơn hàng được lưu vào tài khoản và nhận điểm tích lũy thành viên (1 điểm / 1.000đ).
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => openAuthModal('login')}
+                            className="bg-amber-900 hover:bg-amber-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shrink-0 transition shadow-sm active:scale-95"
+                        >
+                            Đăng nhập ngay
+                        </button>
+                    </div>
+                )}
+
                 {/* THÔNG BÁO LỖI NẾU THANH TOÁN THẤT BẠI */}
                 {errorMsg && (
                     <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-6 flex items-start gap-3 text-red-700 animate-in fade-in">
                         <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" />
                         <div>
-                            <p className="font-bold text-sm">Thanh toán không thành công (PAYMENT_FAILED)</p>
+                            <p className="font-bold text-sm">Chưa thể hoàn tất thanh toán</p>
                             <p className="text-xs text-red-600 mt-0.5">{errorMsg}</p>
                         </div>
                     </div>
@@ -124,9 +155,16 @@ export default function CheckoutPage(){
                 <div className="space-y-6">
                     {/* KHỐI 1: TÓM TẮT ĐƠN HÀNG */}
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-amber-100/80">
-                        <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">
-                            Tóm tắt đơn hàng ({items.length} món)
-                        </h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+                                Tóm tắt đơn hàng ({items.length} món)
+                            </h2>
+                            {token && user && (
+                                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                    Khách hàng: {user.name || user.email}
+                                </span>
+                            )}
+                        </div>
                         <div className="divide-y divide-gray-100 text-sm">
                             {items.map((item) => (
                                 <div key={item.cartItemId} className="py-2.5 flex justify-between items-center">
@@ -149,91 +187,112 @@ export default function CheckoutPage(){
                             </span>
                         </div>
                     </div>
-                    {/* KHỐI 2: CHỌN PHƯƠNG THỨC KHÔNG TIỀN MẶT*/}
+
+                    {/* KHỐI 2: CHỌN PHƯƠNG THỨC KHÔNG TIỀN MẶT */}
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-amber-100/80">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
-                                    Phương thức thanh toán
-                                </h2>
-                                <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                    <ShieldCheck className="w-3.5 h-3.5" /> Không dùng tiền mặt
-                                </span>
-                            </div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+                                Phương thức thanh toán
+                            </h2>
+                            <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Không dùng tiền mặt
+                            </span>
+                        </div>
 
-                            <div className="space-y-3">
-                                {/* Lựa chọn 1: Ví điện tử */}
-                                <div
-                                    onClick={() => setPaymentMethod('WALLET')}
-                                    className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition ${
-                                        paymentMethod === 'WALLET'
-                                        ? 'border-amber-800 bg-amber-50/70 text-amber-950'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center">
-                                            <Wallet className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-sm">Ví điện tử</p>
-                                            <p className="text-xs text-gray-500">MoMo / ZaloPay / VNPay</p>
-                                        </div>
+                        <div className="space-y-3">
+                            {/* Lựa chọn 1: Ví điện tử */}
+                            <div
+                                onClick={() => setPaymentMethod('WALLET')}
+                                className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition ${
+                                    paymentMethod === 'WALLET'
+                                    ? 'border-amber-800 bg-amber-50/70 text-amber-950'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center">
+                                        <Wallet className="w-5 h-5" />
                                     </div>
-                                    <div 
-                                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                            paymentMethod === 'WALLET' ? 'border-amber-800' : 'border-gray-300'
-                                        }`}
-                                    >
-                                        {paymentMethod === 'WALLET' && <div className="w-2.5 h-2.5 rounded-full bg-amber-800" />}
+                                    <div>
+                                        <p className="font-bold text-sm">Ví điện tử</p>
+                                        <p className="text-xs text-gray-500">MoMo / ZaloPay / VNPay (Từ chối đơn &gt; 500k)</p>
                                     </div>
                                 </div>
-
-                                {/* Lựa chọn 2: Thẻ ngân hàng */}
-                                <div
-                                    onClick={() => setPaymentMethod('CARD')}
-                                    className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition ${
-                                        paymentMethod === 'CARD'
-                                        ? 'border-amber-800 bg-amber-50/70 text-amber-950'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                <div 
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                        paymentMethod === 'WALLET' ? 'border-amber-800' : 'border-gray-300'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                                            <CreditCard className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-sm">Thẻ ATM / Thẻ Quốc tế</p>
-                                            <p className="text-xs text-gray-500">Napas / Visa / MasterCard</p>
-                                        </div>
-                                    </div>
-                                    <div
-                                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                            paymentMethod === 'CARD' ? 'border-amber-800' : 'border-gray-300'
-                                        }`}
-                                    >
-                                        {paymentMethod === 'CARD' && <div className="w-2.5 h-2.5 rounded-full bg-amber-800" />}
-                                    </div>
+                                    {paymentMethod === 'WALLET' && <div className="w-2.5 h-2.5 rounded-full bg-amber-800" />}
                                 </div>
                             </div>
 
-                            {/* CÔNG TẮC MÔ PHỎNG LỖI (Để demo trước mặt giảng viên) */}
-                            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                                <span>Chế độ kiểm thử của sinh viên:</span>
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                            {/* Lựa chọn 2: Thẻ ngân hàng */}
+                            <div
+                                onClick={() => setPaymentMethod('CARD')}
+                                className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition ${
+                                    paymentMethod === 'CARD'
+                                    ? 'border-amber-800 bg-amber-50/70 text-amber-950'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                                        <CreditCard className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-sm">Thẻ ATM / Thẻ Quốc tế</p>
+                                        <p className="text-xs text-gray-500">Napas / Visa / MasterCard</p>
+                                    </div>
+                                </div>
+                                <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                        paymentMethod === 'CARD' ? 'border-amber-800' : 'border-gray-300'
+                                    }`}
+                                >
+                                    {paymentMethod === 'CARD' && <div className="w-2.5 h-2.5 rounded-full bg-amber-800" />}
+                                </div>
+                            </div>
+
+                            {/* Ô nhập số thẻ khi chọn Thẻ ngân hàng */}
+                            {paymentMethod === 'CARD' && (
+                                <div className="mt-2 p-3.5 bg-blue-50/60 border border-blue-200 rounded-2xl space-y-1.5 animate-in fade-in">
+                                    <label className="block text-xs font-bold text-blue-950">
+                                        Số thẻ ngân hàng kiểm thử (13–19 chữ số):
+                                    </label>
                                     <input
-                                        type="checkbox"
-                                        checked={simulateFail}
-                                        onChange={(e) => setSimulateFail(e.target.checked)}
-                                        className="rounded text-amber-800 focus:ring-0"
+                                        type="text"
+                                        value={cardNumber}
+                                        onChange={(e) => setCardNumber(e.target.value)}
+                                        placeholder="9704000000000001"
+                                        maxLength={19}
+                                        className="w-full px-3.5 py-2 bg-white border border-blue-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-600 focus:outline-none"
                                     />
-                                    <span className={simulateFail ? 'font-bold text-red-600' : ''}>
-                                        {simulateFail ? 'Đang bật: Mô phỏng lỗi thất bại' : 'Mô phỏng thành công'}
-                                    </span>
-                                </label>
-                            </div>
+                                    <p className="text-[11px] text-gray-500">
+                                        💡 Quy tắc kiểm thử: Đuôi khác <code className="font-bold text-blue-700">0000</code> là thành công; đuôi <code className="font-bold text-red-600">0000</code> sẽ bị từ chối.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* CÔNG TẮC MÔ PHỎNG LỖI (Để demo kiểm thử) */}
+                        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                            <span>Chế độ kiểm thử demo:</span>
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={simulateFail}
+                                    onChange={(e) => setSimulateFail(e.target.checked)}
+                                    className="rounded text-amber-800 focus:ring-0"
+                                />
+                                <span className={simulateFail ? 'font-bold text-red-600' : ''}>
+                                    {simulateFail ? 'Đang bật: Mô phỏng lỗi thất bại' : 'Mô phỏng thành công'}
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
-                    {/* NÚT XÁC NHẬN TRẢ*/}
+                    {/* NÚT XÁC NHẬN TRẢ */}
                     <button
                         onClick={handlePayment}
                         disabled={loading}
@@ -251,5 +310,5 @@ export default function CheckoutPage(){
                 </div>
             </main>
         </div>
-    )
+    );
 }
