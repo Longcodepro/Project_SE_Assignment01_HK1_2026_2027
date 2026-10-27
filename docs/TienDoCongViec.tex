@@ -280,17 +280,109 @@
     \textbf{Tình hình Sprint 2 (cập nhật 26/10/2026)} \\
     \hline
     - Đã xong: Task 04 (issue \#6, Pull Request \#30), Task 05 (issue \#7, Pull Request \#34), Task 06 (issue \#8, Pull Request \#31) và Task 07 (issue \#9, Pull Request \#32), đều đã merge vào \texttt{main}, bốn issue đã đóng. \newline
-    - Kết luận: Sprint 2 đã hoàn thành. \newline
-    - Phần backend của Sprint 3 (issue \#10, \#12, \#14 đến \#17: thanh toán, lịch sử đơn, máy trạng thái đơn hàng, chống gửi trùng, khóa lạc quan, tích điểm) đã viết trên các nhánh cục bộ, chưa tạo Pull Request nên chưa tính là hoàn thành. \\
+    - Kết luận: Sprint 2 đã hoàn thành đầy đủ mục tiêu đặt ra. \\
     \hline
 \end{tabularx}
 
 \vspace{0.8cm}
 
-\TaskTable{08}
-\clearpage
+% ==================== TASK 08 ====================
+\subsection*{Task 08: Thanh toán không tiền mặt (POST /payments \& Checkout)}
 
-\TaskTable{09}
-\TaskTable{10}
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 - 27/10/2026 & Màn hình thanh toán và xác nhận đơn &
+    - Tài xây dựng giao diện thanh toán tại \texttt{/checkout} và màn hình kết quả tại \texttt{/order-success}: hỗ trợ hai phương thức Ví điện tử (WALLET) và Thẻ ngân hàng (CARD), kiểm tra hợp lệ dữ liệu thẻ; mở Pull Request \#35, merge vào \texttt{main} lúc 09:44 ngày 27/10, hoàn thành issue \#11 \\
+    \hline
+
+    2 & 26/10/2026 & Xây dựng API thanh toán mô phỏng &
+    - Long viết endpoint \texttt{POST /payments} (bảo vệ bởi guard JWT): nhận yêu cầu thanh toán mô phỏng Ví/Thẻ, cập nhật trạng thái đơn hàng sang PAID hoặc PAYMENT\_FAILED; từ chối thẻ có đuôi 0000, từ chối ví cho đơn trên 500.000 đồng; thêm bảng Payment và migration \texttt{tao\_bang\_thanh\_toan} \\
+    \hline
+
+    3 & 26/10/2026 - 27/10/2026 & Kiểm thử API thanh toán &
+    - Long chạy lint (0 lỗi), build và kiểm thử với Vitest (33/33 test qua); kiểm thử tích hợp thực tế với PostgreSQL: đơn hợp lệ được chuyển sang PAID, đơn vi phạm quy tắc trả PAYMENT\_FAILED kèm lý do từ chối \\
+    \hline
+
+    4 & 27/10/2026 & Pull Request \#37 &
+    - Long mở Pull Request \#37, CI chạy thành công cả 3 job (backend, frontend, docker), merge vào \texttt{main} lúc 10:03 ngày 27/10; hoàn thành và đóng issue \#10 \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+% ==================== TASK 09 ====================
+\subsection*{Task 09: Lịch sử đơn hàng và đồng bộ hệ thống (GET /orders/me \& Next.js)}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 - 27/10/2026 & Màn hình lịch sử đơn hàng &
+    - Tài xây dựng trang \texttt{/orders} hiển thị danh sách đơn hàng đã đặt kèm chi tiết từng món và trạng thái đơn; cập nhật thanh điều hướng Navbar và liên kết chuyển trang từ màn hình đặt hàng thành công \\
+    \hline
+
+    2 & 27/10/2026 & Pull Request \#36 &
+    - Tài mở Pull Request \#36; sau khi đồng bộ mã nguồn và giải quyết xung đột với \texttt{main}, CI chạy thành công cả 3 job, merge vào \texttt{main} lúc 09:52 ngày 27/10; hoàn thành và đóng issue \#13 \\
+    \hline
+
+    3 & 26/10/2026 - 27/10/2026 & API lịch sử đơn và Docker Compose &
+    - Long viết endpoint \texttt{GET /orders/me} (guard JWT) trả về danh sách lịch sử đơn của người dùng đang đăng nhập kèm chi tiết món, sắp xếp mới nhất trước; chuẩn hóa cấu hình cổng trong \texttt{docker-compose.yml} (backend 4000, frontend 4001, database 4002) \\
+    \hline
+
+    4 & 27/10/2026 & Kiểm thử và Pull Request \#38 &
+    - Long kiểm tra lint, build và chạy kiểm thử tự động; mở Pull Request \#38, CI chạy thành công, merge vào \texttt{main} lúc 10:10 ngày 27/10; hoàn thành và đóng issue \#12 \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+% ==================== TASK 10 ====================
+\subsection*{Task 10: Nâng cao độ tin cậy và nghiệp vụ đơn hàng}
+
+\begin{tabularx}{\textwidth}{|c|p{3.2cm}|Y|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{STT} & \textbf{Thời gian} & \textbf{Nội dung} & \textbf{Công việc \& Phân công} \\
+    \hline
+
+    1 & 26/10/2026 - 27/10/2026 & Máy trạng thái đơn hàng (Order State Machine) &
+    - Long xây dựng State Machine kiểm soát vòng đời đơn hàng: chỉ cho phép chuyển từ PENDING sang PAID hoặc PAYMENT\_FAILED, PAYMENT\_FAILED sang PAID (cho phép thanh toán lại); chặn mọi bước nhảy trạng thái sai; Pull Request \#39 merge vào \texttt{main} lúc 10:10 (đóng issue \#14) \\
+    \hline
+
+    2 & 26/10/2026 - 27/10/2026 & Chống gửi trùng (Idempotency-Key) &
+    - Long xử lý header \texttt{Idempotency-Key} cho \texttt{POST /orders} và \texttt{POST /payments}: lưu kết quả xử lý vào cache cơ sở dữ liệu, trả về kết quả cũ kèm header \texttt{X-Cache: HIT} khi client gửi lặp lại, ngăn chặn tạo đơn hoặc trừ tiền trùng lặp; Pull Request \#40 merge vào \texttt{main} lúc 10:12 (đóng issue \#15) \\
+    \hline
+
+    3 & 26/10/2026 - 27/10/2026 & Khóa lạc quan (Optimistic Locking) &
+    - Long áp dụng khóa lạc quan qua trường \texttt{version} trong bảng Order: kiểm tra và tăng version khi cập nhật trạng thái đơn, từ chối cập nhật đồng thời với mã lỗi 409 Conflict khi phát hiện race condition; Pull Request \#41 merge vào \texttt{main} lúc 10:12 (đóng issue \#16) \\
+    \hline
+
+    4 & 26/10/2026 - 27/10/2026 & Tích điểm thành viên (Loyalty) &
+    - Long triển khai logic tích điểm khách hàng thân thiết: tự động cộng 1 điểm cho mỗi 1.000 đồng khi thanh toán thành công, lưu dồn vào trường \texttt{loyaltyPoints} của người dùng; Pull Request \#42 merge vào \texttt{main} lúc 10:12 (đóng issue \#17) \\
+    \hline
+\end{tabularx}
+
+\vspace{0.8cm}
+
+\begin{tabularx}{\textwidth}{|Y|}
+    \hline
+    \rowcolor{gray!20}
+    \textbf{Tình hình Sprint 3 và Kết luận hoàn thành dự án (cập nhật 27/10/2026)} \\
+    \hline
+    - Đã hoàn thành toàn bộ 10/10 nhiệm vụ (Tasks) của dự án theo kế hoạch đề ra: \newline
+    \quad $\bullet$ Task 08: Hoàn thành chức năng thanh toán không tiền mặt (issue \#10, \#11, Pull Request \#35, \#37). \newline
+    \quad $\bullet$ Task 09: Hoàn thành chức năng lịch sử đơn hàng và chuẩn hóa Docker (issue \#12, \#13, Pull Request \#36, \#38). \newline
+    \quad $\bullet$ Task 10: Hoàn thành 4 tính năng nâng cao độ tin cậy và nghiệp vụ đơn hàng (issue \#14, \#15, \#16, \#17, Pull Request \#39, \#40, \#41, \#42). \newline
+    - Toàn bộ các Pull Request đều đã được kiểm tra CI tự động (backend, frontend, docker), review chéo và merge vào nhánh \texttt{main}. \newline
+    - Kết quả kiểm thử: Backend đạt 64/64 test cases bằng Vitest, 0 cảnh báo lint; Frontend Next.js 16 biên dịch thành công, không lỗi. Toàn bộ hệ thống vận hành ổn định qua Docker Compose. \newline
+    - Kết luận: Đồ án hoàn thành trọn vẹn các mục tiêu của Assignment 1, đáp ứng đầy đủ tiêu chí Definition of Done cho tất cả các nhiệm vụ. \\
+    \hline
+\end{tabularx}
 
 \end{document}
