@@ -444,8 +444,8 @@
     - Long thêm middleware ghi log trong \texttt{backend/src/main.ts} để mỗi khi có request từ frontend thì backend tự động in method, đường dẫn, mã trạng thái HTTP và thời gian phản hồi ra terminal để tiện theo dõi; mở Pull Request \#49 \\
     \hline
 
-    4 & 27/10/2026 & Viết script xem log Docker tiện lợi &
-    - Long viết thêm script \texttt{scripts/logs.sh} giúp stream log của container backend nhanh chóng khi chạy nền; cập nhật lại hướng dẫn trong \texttt{README.md} và \texttt{start-tunnel.sh} \\
+    4 & 27/10/2026 & Cấu hình Server API động &
+    - Tài và Long xây dựng tính năng cấu hình Backend API động ngay trên giao diện web: tạo modal nhập link Cloudflare Tunnel, lưu cấu hình vào localStorage để người dùng test trên điện thoại có thể kết nối ngay mà không cần cấu hình lại Vercel; mở Pull Request \#52 \\
     \hline
 \end{tabularx}
 
@@ -484,7 +484,7 @@
     \rowcolor{gray!20}
     \textbf{TỔNG KẾT ĐỒ ÁN ASSIGNMENT 1 (CẬP NHẬT 27/10/2026)} \\
     \hline
-    - \textbf{Khối lượng công việc}: Hoàn thành đầy đủ 10 Tasks nghiệp vụ chính và 3 phần việc hoàn thiện thêm (CD, giao diện mobile, logging). Đã xử lý xong 19 issues và tạo 49 Pull Requests trên GitHub. \newline
+    - \textbf{Khối lượng công việc}: Hoàn thành đầy đủ 10 Tasks nghiệp vụ chính và 3 phần việc hoàn thiện thêm (CD, giao diện mobile, logging và cấu hình server động). Đã xử lý xong 19 issues và tạo 52 Pull Requests trên GitHub. \newline
     - \textbf{Chất lượng mã nguồn}: \newline
     \quad $\bullet$ Backend: 8 bộ kiểm thử với 64/64 test cases chạy qua bằng Vitest; 0 lỗi lint qua oxlint; Prisma migration tạo cơ sở dữ liệu PostgreSQL ổn định. \newline
     \quad $\bullet$ Frontend: Viết bằng Next.js 16 (Turbopack), biên dịch 8/8 trang không có lỗi TypeScript hay ESLint; giao diện responsive chạy tốt trên cả máy tính lẫn điện thoại. \newline
