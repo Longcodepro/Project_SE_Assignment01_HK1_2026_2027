@@ -7,7 +7,9 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  IsString,
   Max,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -49,4 +51,13 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items!: OrderItemDto[];
+
+  @ApiPropertyOptional({
+    example: 'BREW10',
+    description: 'BREW10: giảm 10% tối đa 20.000đ; GIAM15K: giảm 15.000đ cho đơn từ 50.000đ. Mã sai trả 400',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  promoCode?: string;
 }
