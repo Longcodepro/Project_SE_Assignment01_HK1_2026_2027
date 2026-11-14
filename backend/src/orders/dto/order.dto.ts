@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsIn } from 'class-validator';
 import { OrderStatus, Size } from '../../generated/prisma/enums.js';
+import { STAFF_STEPS, type StaffStep } from '../order-status.js';
 import { TOPPING_PRICE } from '../pricing.js';
+
+// Body của PATCH /orders/:id/status (nhân viên quầy)
+export class UpdateOrderStatusDto {
+  @ApiProperty({ enum: STAFF_STEPS, example: 'PREPARING' })
+  @IsIn(STAFF_STEPS)
+  status!: StaffStep;
+}
 
 // Kết quả POST /orders
 export class OrderSummaryDto {

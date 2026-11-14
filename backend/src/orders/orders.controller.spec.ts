@@ -19,8 +19,15 @@ async function setup(
   // count = 1: còn đủ hàng; test hết hàng đổi thành 0
   const productUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
   const prisma = {
-    product: { findMany, updateMany: productUpdateMany },
-    order: { create, findMany: findManyOrders, findUnique },
+    product: { findMany, updateMany: productUpdateMany, update: vi.fn().mockResolvedValue({}) },
+    order: {
+      create,
+      findMany: findManyOrders,
+      findUnique,
+      findFirst: vi.fn().mockResolvedValue(null),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
+    user: { findUnique: vi.fn().mockResolvedValue({ role: 'CUSTOMER' }) },
     $transaction: (fn: (tx: unknown) => unknown) => fn(prisma),
   };
   const moduleRef = await Test.createTestingModule({
@@ -39,8 +46,110 @@ async function setup(
   const app = moduleRef.createNestApplication();
   app.useGlobalPipes(createValidationPipe());
   await app.init();
-  return { app, create, findManyOrders, findUnique, productUpdateMany };
+  return { app, create, findManyOrders, findUnique, productUpdateMany, prisma };
 }
+
+describe('POST /orders/:id/cancel', () => {
+  const mine = {
+    id: 'ord_1', userId: 7, status: 'PENDING', total: 84000, version: 2,
+    items: [{ productId: 1, quantity: 2 }, { productId: 3, quantity: 1 }],
+  };
+
+  it('hủy đơn PENDING: đổi CANCELLED có khoá lạc quan và hoàn kho từng món', async () => {
+    const { app, prisma } = await setup();
+    prisma.order.findFirst.mockResolvedValue(mine);
+    const res = await request(app.getHttpServer()).post('/orders/ord_1/cancel').expect(200);
+    expect(res.body).toEqual({ id: 'ord_1', status: 'CANCELLED', total: 84000 });
+    expect(prisma.order.findFirst.mock.calls[0][0].where).toEqual({ id: 'ord_1', userId: 7 });
+    expect(prisma.order.updateMany.mock.calls[0][0]).toEqual({
+      where: { id: 'ord_1', version: 2 },
+      data: { status: 'CANCELLED', version: { increment: 1 } },
+    });
+    expect(prisma.product.update.mock.calls.map((c: any) => c[0])).toEqual([
+      { where: { id: 1 }, data: { stock: { increment: 2 } } },
+      { where: { id: 3 }, data: { stock: { increment: 1 } } },
+    ]);
+    await app.close();
+  });
+
+  it('409 khi đơn đã PAID, không hoàn kho', async () => {
+    const { app, prisma } = await setup();
+    prisma.order.findFirst.mockResolvedValue({ ...mine, status: 'PAID' });
+    await request(app.getHttpServer()).post('/orders/ord_1/cancel').expect(409);
+    expect(prisma.product.update).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('404 khi đơn không phải của mình', async () => {
+    const { app } = await setup();
+    await request(app.getHttpServer()).post('/orders/ord_x/cancel').expect(404);
+    await app.close();
+  });
+
+  it('409 khi yêu cầu khác vừa sửa đơn (version đổi), không hoàn kho', async () => {
+    const { app, prisma } = await setup();
+    prisma.order.findFirst.mockResolvedValue(mine);
+    prisma.order.updateMany.mockResolvedValue({ count: 0 });
+    await request(app.getHttpServer()).post('/orders/ord_1/cancel').expect(409);
+    expect(prisma.product.update).not.toHaveBeenCalled();
+    await app.close();
+  });
+});
+
+describe('Nhân viên quầy', () => {
+  const paid = { id: 'ord_1', userId: 9, status: 'PAID', total: 84000, version: 4 };
+
+  it('403 khi khách thường gọi PATCH /orders/:id/status hoặc GET /orders/queue', async () => {
+    const { app, prisma } = await setup();
+    await request(app.getHttpServer()).patch('/orders/ord_1/status').send({ status: 'PREPARING' }).expect(403);
+    await request(app.getHttpServer()).get('/orders/queue').expect(403);
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('STAFF chuyển PAID → PREPARING có khoá lạc quan', async () => {
+    const { app, prisma, findUnique } = await setup();
+    prisma.user.findUnique.mockResolvedValue({ role: 'STAFF' });
+    findUnique.mockResolvedValue(paid);
+    const res = await request(app.getHttpServer())
+      .patch('/orders/ord_1/status')
+      .send({ status: 'PREPARING' })
+      .expect(200);
+    expect(res.body).toEqual({ id: 'ord_1', status: 'PREPARING', total: 84000 });
+    expect(prisma.order.updateMany.mock.calls[0][0]).toEqual({
+      where: { id: 'ord_1', version: 4 },
+      data: { status: 'PREPARING', version: { increment: 1 } },
+    });
+    await app.close();
+  });
+
+  it('STAFF nhảy cóc PAID → COMPLETED bị 409', async () => {
+    const { app, prisma, findUnique } = await setup();
+    prisma.user.findUnique.mockResolvedValue({ role: 'STAFF' });
+    findUnique.mockResolvedValue(paid);
+    await request(app.getHttpServer()).patch('/orders/ord_1/status').send({ status: 'COMPLETED' }).expect(409);
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it.each(['PAID', 'CANCELLED', 'PENDING', 'xyz'])('400 khi nhân viên gửi status %s', async (status) => {
+    const { app, prisma } = await setup();
+    prisma.user.findUnique.mockResolvedValue({ role: 'STAFF' });
+    await request(app.getHttpServer()).patch('/orders/ord_1/status').send({ status }).expect(400);
+    await app.close();
+  });
+
+  it('GET /orders/queue trả đơn PAID/PREPARING/READY, cũ nhất trước', async () => {
+    const { app, prisma, findManyOrders } = await setup();
+    prisma.user.findUnique.mockResolvedValue({ role: 'STAFF' });
+    await request(app.getHttpServer()).get('/orders/queue').expect(200);
+    expect(findManyOrders.mock.calls[0][0]).toMatchObject({
+      where: { status: { in: ['PAID', 'PREPARING', 'READY'] } },
+      orderBy: { createdAt: 'asc' },
+    });
+    await app.close();
+  });
+});
 
 describe('POST /orders', () => {
   it('lưu đơn PENDING, tính tổng ở server và trả mã đơn', async () => {
