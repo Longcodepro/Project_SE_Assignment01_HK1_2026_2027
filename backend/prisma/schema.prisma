@@ -24,10 +24,21 @@ enum Size {
   L
 }
 
+// Chuyển trạng thái hợp lệ nằm ở src/orders/order-status.ts
 enum OrderStatus {
   PENDING
   PAID
   PAYMENT_FAILED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+// STAFF (nhân viên quầy) được chuyển đơn PAID → PREPARING → READY → COMPLETED
+enum Role {
+  CUSTOMER
+  STAFF
 }
 
 model Order {
@@ -72,6 +83,7 @@ model User {
   name         String?
   // Tích lũy khi thanh toán thành công (xem payments/loyalty.ts)
   loyaltyPoints Int     @default(0)
+  role         Role     @default(CUSTOMER)
   createdAt    DateTime @default(now())
   orders       Order[]
 }
