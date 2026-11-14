@@ -16,15 +16,16 @@ async function setup(
     Promise.resolve({ id: data.id, status: 'PENDING', total: data.total }),
   );
   const findMany = vi.fn().mockResolvedValue([{ id: 1, price: 29000 }]);
+  // count = 1: còn đủ hàng; test hết hàng đổi thành 0
+  const productUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
+  const prisma = {
+    product: { findMany, updateMany: productUpdateMany },
+    order: { create, findMany: findManyOrders, findUnique },
+    $transaction: (fn: (tx: unknown) => unknown) => fn(prisma),
+  };
   const moduleRef = await Test.createTestingModule({
     controllers: [OrdersController],
-    providers: [
-      OrdersService,
-      {
-        provide: PrismaService,
-        useValue: { product: { findMany }, order: { create, findMany: findManyOrders, findUnique } },
-      },
-    ],
+    providers: [OrdersService, { provide: PrismaService, useValue: prisma }],
   })
     // guard thật được test riêng ở auth.controller.spec.ts
     .overrideGuard(JwtAuthGuard)
@@ -38,7 +39,7 @@ async function setup(
   const app = moduleRef.createNestApplication();
   app.useGlobalPipes(createValidationPipe());
   await app.init();
-  return { app, create, findManyOrders, findUnique };
+  return { app, create, findManyOrders, findUnique, productUpdateMany };
 }
 
 describe('POST /orders', () => {
@@ -86,6 +87,32 @@ describe('POST /orders', () => {
       .send({ items: [{ ...item, productId: 99 }] })
       .expect(400);
 
+    expect(create).not.toHaveBeenCalled();
+    await app.close();
+  });
+});
+
+describe('POST /orders trừ tồn kho', () => {
+  it('trừ kho theo tổng số ly của từng sản phẩm, chỉ trừ khi còn đủ', async () => {
+    const { app, productUpdateMany } = await setup();
+    await request(app.getHttpServer())
+      .post('/orders')
+      .send({ items: [item, { ...item, size: 'L', quantity: 3 }] })
+      .expect(201);
+    // 2 ly size M + 3 ly size L cùng sản phẩm 1 → trừ một lần 5 ly
+    expect(productUpdateMany).toHaveBeenCalledTimes(1);
+    expect(productUpdateMany.mock.calls[0][0]).toEqual({
+      where: { id: 1, stock: { gte: 5 } },
+      data: { stock: { decrement: 5 } },
+    });
+    await app.close();
+  });
+
+  it('409 khi không đủ hàng, không tạo đơn', async () => {
+    const { app, create, productUpdateMany } = await setup();
+    productUpdateMany.mockResolvedValueOnce({ count: 0 });
+    const res = await request(app.getHttpServer()).post('/orders').send({ items: [item] }).expect(409);
+    expect(res.body.message).toMatch(/không đủ hàng/);
     expect(create).not.toHaveBeenCalled();
     await app.close();
   });
