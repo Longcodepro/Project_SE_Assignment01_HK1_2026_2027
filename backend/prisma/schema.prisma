@@ -13,6 +13,8 @@ model Product {
   // VND, size S
   price    Int
   imageUrl String
+  // Số ly còn bán được. Trừ khi đặt đơn (orders.service.ts), DB có CHECK stock >= 0
+  stock    Int    @default(100)
   orderItems OrderItem[]
 }
 

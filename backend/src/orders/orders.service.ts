@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { isUniqueViolation } from '../common/idempotency.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -43,16 +43,34 @@ export class OrdersService {
     }));
     const total = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
+    // Cộng dồn số ly theo sản phẩm (một sản phẩm có thể nằm ở nhiều dòng khác size)
+    const qtyById = new Map<number, number>();
+    for (const i of items) qtyById.set(i.productId, (qtyById.get(i.productId) ?? 0) + i.quantity);
+
     try {
-      return await this.prisma.order.create({
-        data: {
-          id: `ord_${randomBytes(5).toString('hex')}`,
-          userId,
-          idempotencyKey,
-          total,
-          items: { create: items },
-        },
-        select: SUMMARY,
+      return await this.prisma.$transaction(async (tx) => {
+        // Trừ kho có điều kiện: UPDATE ... WHERE stock >= qty là một câu lệnh nguyên tử,
+        // hai yêu cầu đồng thời không thể cùng thấy "còn hàng" rồi cùng trừ.
+        // Một sản phẩm thiếu hàng thì ném lỗi, transaction hoàn lại các lần trừ trước.
+        for (const [productId, qty] of qtyById) {
+          const { count } = await tx.product.updateMany({
+            where: { id: productId, stock: { gte: qty } },
+            data: { stock: { decrement: qty } },
+          });
+          if (count === 0) {
+            throw new ConflictException(`Sản phẩm ${productId} không đủ hàng cho ${qty} ly`);
+          }
+        }
+        return tx.order.create({
+          data: {
+            id: `ord_${randomBytes(5).toString('hex')}`,
+            userId,
+            idempotencyKey,
+            total,
+            items: { create: items },
+          },
+          select: SUMMARY,
+        });
       });
     } catch (e) {
       // Hai yêu cầu cùng key đến cùng lúc: yêu cầu thua trả lại đơn của yêu cầu thắng

@@ -19,10 +19,14 @@ async function setup() {
   };
   const prisma = {
     user,
-    product: { findMany: vi.fn().mockResolvedValue([{ id: 1, price: 29000 }]) },
+    product: {
+      findMany: vi.fn().mockResolvedValue([{ id: 1, price: 29000 }]),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
     order: {
       create: vi.fn().mockResolvedValue({ id: 'ord_1', status: 'PENDING', total: 29000 }),
     },
+    $transaction: (fn: (tx: unknown) => unknown) => fn(prisma),
   };
   const moduleRef = await Test.createTestingModule({
     imports: [JwtModule.register({ secret: 'test-secret', signOptions: { expiresIn: '1h' } })],

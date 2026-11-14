@@ -12,4 +12,7 @@ export class ProductDto {
 
   @ApiProperty({ example: 'https://example.com/ca-phe-sua.jpg' })
   imageUrl!: string;
+
+  @ApiProperty({ example: 100, description: 'Số ly còn bán được' })
+  stock!: number;
 }

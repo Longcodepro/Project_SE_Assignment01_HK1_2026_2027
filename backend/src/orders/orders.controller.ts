@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiHeader,
   ApiOkResponse,
@@ -32,6 +33,7 @@ export class OrdersController {
   })
   @ApiCreatedResponse({ type: OrderSummaryDto })
   @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ hoặc sản phẩm không tồn tại' })
+  @ApiConflictResponse({ description: 'Sản phẩm không đủ hàng' })
   create(
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateOrderDto,
