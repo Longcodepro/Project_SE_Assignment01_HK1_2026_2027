@@ -12,8 +12,9 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
 import { assertTransition, type StaffStep } from './order-status.js';
 import { unitPrice } from './pricing.js';
+import { discountFor } from './promo.js';
 
-const SUMMARY = { id: true, status: true, total: true } as const;
+const SUMMARY = { id: true, status: true, total: true, discount: true, promoCode: true } as const;
 
 @Injectable()
 export class OrdersService {
@@ -49,7 +50,9 @@ export class OrdersService {
       toppings: i.toppings ?? [],
       unitPrice: unitPrice(priceById.get(i.productId)!, i.size, i.toppings ?? []),
     }));
-    const total = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const promo = dto.promoCode ? discountFor(dto.promoCode, subtotal) : undefined;
+    const total = subtotal - (promo?.discount ?? 0);
 
     // Cộng dồn số ly theo sản phẩm (một sản phẩm có thể nằm ở nhiều dòng khác size)
     const qtyById = new Map<number, number>();
@@ -75,6 +78,8 @@ export class OrdersService {
             userId,
             idempotencyKey,
             total,
+            promoCode: promo?.code,
+            discount: promo?.discount ?? 0,
             items: { create: items },
           },
           select: SUMMARY,
@@ -117,7 +122,7 @@ export class OrdersService {
         });
       }
     });
-    return { id: order.id, status: 'CANCELLED' as const, total: order.total };
+    return summaryOf(order, 'CANCELLED');
   }
 
   // Nhân viên quầy đẩy đơn qua PREPARING → READY → COMPLETED
@@ -127,7 +132,7 @@ export class OrdersService {
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
     assertTransition(order.status, to);
     await setStatus(this.prisma, order, to);
-    return { id: order.id, status: to, total: order.total };
+    return summaryOf(order, to);
   }
 
   // Hàng đợi của quầy: đơn đã trả tiền chưa giao, cũ nhất trước
@@ -153,6 +158,12 @@ export class OrdersService {
   }
 }
 
+// Cùng hình dạng với kết quả POST /orders (OrderSummaryDto)
+const summaryOf = (
+  o: { id: string; total: number; discount: number; promoCode: string | null },
+  status: OrderStatus,
+) => ({ id: o.id, status, total: o.total, discount: o.discount, promoCode: o.promoCode });
+
 // Khoá lạc quan: chỉ ghi khi version chưa đổi kể từ lúc đọc, như payments.service.ts
 async function setStatus(
   tx: Pick<PrismaService, 'order'>,
@@ -169,9 +180,7 @@ async function setStatus(
 }
 
 const HISTORY = {
-  id: true,
-  status: true,
-  total: true,
+  ...SUMMARY,
   createdAt: true,
   items: {
     orderBy: { id: 'asc' },

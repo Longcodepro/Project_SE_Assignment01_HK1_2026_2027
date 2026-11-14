@@ -201,6 +201,42 @@ describe('POST /orders', () => {
   });
 });
 
+describe('POST /orders với mã giảm giá', () => {
+  it('áp BREW10: lưu mã và số tiền giảm, total là số phải trả', async () => {
+    const { app, create } = await setup();
+    await request(app.getHttpServer())
+      .post('/orders')
+      .send({ items: [item], promoCode: 'brew10' })
+      .expect(201);
+    // tạm tính 84.000đ, giảm 10% = 8.400đ
+    expect(create.mock.calls[0][0].data).toMatchObject({
+      total: 75600,
+      discount: 8400,
+      promoCode: 'BREW10',
+    });
+    await app.close();
+  });
+
+  it('không gửi mã thì discount 0', async () => {
+    const { app, create } = await setup();
+    await request(app.getHttpServer()).post('/orders').send({ items: [item] }).expect(201);
+    expect(create.mock.calls[0][0].data).toMatchObject({ total: 84000, discount: 0, promoCode: undefined });
+    await app.close();
+  });
+
+  it('400 khi mã sai, không trừ kho và không tạo đơn', async () => {
+    const { app, create, productUpdateMany } = await setup();
+    const res = await request(app.getHttpServer())
+      .post('/orders')
+      .send({ items: [item], promoCode: 'SAI' })
+      .expect(400);
+    expect(res.body.message).toMatch(/không hợp lệ/);
+    expect(productUpdateMany).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+    await app.close();
+  });
+});
+
 describe('POST /orders trừ tồn kho', () => {
   it('trừ kho theo tổng số ly của từng sản phẩm, chỉ trừ khi còn đủ', async () => {
     const { app, productUpdateMany } = await setup();
