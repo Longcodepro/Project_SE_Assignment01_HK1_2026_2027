@@ -1,0 +1,276 @@
+% !TEX program = xelatex
+% Báo cáo Assignment 1 - BrewLite. Biên dịch: latexmk -xelatex BaoCao_Assignment1.tex
+\documentclass[12pt, a4paper]{article}
+\newcommand{\tenLong}{Nguyễn Thành Long}
+\newcommand{\tenTai}{Trần Quốc Tài}
+\newcommand{\mssvLong}{MSSV: ..........}   % TODO: điền MSSV
+\newcommand{\mssvTai}{MSSV: ..........}    % TODO: điền MSSV
+\newcommand{\sgufooter}{Bài tập lớn môn Công nghệ phần mềm -- Assignment 1 -- HK1 2026-2027}
+\input{sgu}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\begin{document}
+\sgutitle{BrewLite -- Ứng dụng đặt cà phê}{Assignment 1: Hiện thực nghiệp vụ end-to-end theo Scrum}{THÁNG 11/2026}
+
+% =====================================================================
+\section{Giới thiệu}
+\subsection{Đề tài và mục tiêu}
+BrewLite là ứng dụng đặt đồ uống không dùng tiền mặt. Luồng nghiệp vụ tối thiểu theo đề:
+\emph{xem menu $\rightarrow$ chọn size/topping $\rightarrow$ giỏ hàng $\rightarrow$ đặt đơn $\rightarrow$ thanh toán $\rightarrow$ theo dõi đơn}.
+Assignment 1 chấm \textbf{việc hiện thực chạy được từ đầu đến cuối} theo quy trình Agile Scrum: 10 task, mỗi task 1 điểm,
+công nghệ bắt buộc NestJS (backend) và Next.js (frontend). Các sơ đồ phân tích thiết kế, SRS và kiến trúc thuộc phạm vi
+Assignment 2 và không đưa vào báo cáo này.
+
+\subsection{Nhóm và kho mã nguồn}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{@{}l l X l@{}}
+\toprule
+\textbf{Thành viên} & \textbf{GitHub} & \textbf{Vai trò} & \textbf{Khu vực mã} \\ \midrule
+\tenLong{} & \texttt{Longcodepro} & Backend, DevOps, Scrum Master & \fpath{backend/}, \fpath{.github/}, \fpath{docker-compose.yml} \\
+\tenTai{} & \texttt{TaiTran263} & Frontend, UI/UX & \fpath{frontend/} \\ \bottomrule
+\end{tabularx}
+\end{table}
+Kho mã: \url{https://github.com/Longcodepro/Project_SE_Assignment01_HK1_2026_2027}. Mỗi bài tập có một kho riêng;
+kho của Assignment 1 dùng để \emph{kiểm chứng phân công}: mỗi chức năng một nhánh, một Pull Request, một issue,
+nên có thể truy từ từng task về người thực hiện.
+
+\subsection{Công nghệ}
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule \textbf{Thành phần} & \textbf{Công nghệ} \\ \midrule
+Frontend & Next.js 16 (App Router), TypeScript, Tailwind CSS, Zustand (giỏ hàng, phiên đăng nhập), Axios \\
+Backend & NestJS 12, TypeScript (ESM), class-validator, JWT, \texttt{bcryptjs}, Swagger tại \texttt{/docs} \\
+Cơ sở dữ liệu & PostgreSQL 16, Prisma 7 (7 migration đến 27/10, thêm 3 migration ở mục~\ref{sec:t10}) \\
+Thanh toán & Cổng thanh toán mô phỏng (Ví / Thẻ) viết trong \fpath{payments/mock-gateway.ts} \\
+Kiểm thử & Vitest + Supertest (unit), test tích hợp trên PostgreSQL thật, Postman/newman \\
+DevOps & Docker Compose (3 dịch vụ), GitHub Actions CI/CD, ảnh Docker đẩy lên GHCR \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Quy trình Scrum}
+\subsection{Kế hoạch sprint}
+Nhóm chia 3 sprint theo gợi ý của đề. Dữ liệu dưới đây lấy từ issue và milestone trên GitHub
+(issue \#3 đến \#19); các issue đều đã đóng.
+
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule \textbf{Sprint} & \textbf{Mục tiêu và issue} & \textbf{Hoàn thành} \\ \midrule
+Sprint 1 & Nền tảng và menu: \#3 CI, \#4 API sản phẩm, \#5 trang Menu & 23/10 -- 25/10/2026 \\
+Sprint 2 & Giỏ hàng, đặt đơn, đăng nhập: \#6 chi tiết sản phẩm, \#7 giỏ hàng, \#8 API tạo đơn, \#9 JWT & 26/10/2026 \\
+Sprint 3 & Thanh toán, bàn giao, nghiệp vụ nâng cao: \#10 thanh toán, \#11 màn thanh toán, \#12 lịch sử đơn + docker, \#13 màn lịch sử, \#14--\#17 Task 10, \#19 README & 27/10/2026 \\
+Ngoài sprint & \#18 CD (đóng gói ảnh Docker lên GHCR, cấu hình Cloudflare Tunnel) & 27/10/2026 \\ \bottomrule
+\end{tabularx}
+\caption{Issue theo milestone (nguồn: GitHub Issues)}
+\end{table}
+
+\subsection{Quy ước làm việc}
+\begin{itemize}
+  \item Mỗi chức năng một nhánh \texttt{<tên>/task-N-mô-tả}; không đẩy trực tiếp lên \texttt{main}.
+  \item Commit dạng \texttt{<loại>(task-N): <mô tả>} bằng tiếng Việt, mỗi commit một mục đích.
+  \item Mỗi Pull Request gắn một issue (\texttt{Closes}/\texttt{Refs \#N}); CI phải xanh mới merge.
+  \item Trước khi commit backend: \texttt{npm run lint \&\& npm run build \&\& npm test}.
+\end{itemize}
+
+% =====================================================================
+\section{Hiện thực 10 task}
+Bảng sau đối chiếu từng task của đề với hiện thực. Cột PR là Pull Request đã merge vào \texttt{main}.
+
+\begin{table}[H]\centering\footnotesize
+\begin{tabularx}{\textwidth}{@{}c L{3.3cm} X l l@{}}
+\toprule \textbf{\#} & \textbf{Task của đề} & \textbf{Hiện thực} & \textbf{Người} & \textbf{PR} \\ \midrule
+1 & Khởi tạo dự án & Hai thư mục \texttt{frontend}, \texttt{backend}, Docker, README, \texttt{.env.example} & Tài, Long & \#1, \#2 \\
+2 & API danh sách sản phẩm & \texttt{GET /products} (Prisma, 6 món mẫu), Swagger, Postman & Long & \#24, \#28 \\
+3 & Trang Menu & Lưới sản phẩm; trạng thái loading, rỗng, lỗi + thử lại & Tài & \#22 \\
+4 & Chi tiết, tùy chọn & Chọn size S/M/L, topping; giá cập nhật theo tùy chọn & Tài & \#30 \\
+5 & Giỏ hàng & Thêm, sửa, xóa; Zustand lưu \texttt{localStorage}; badge số lượng & Tài & \#34 \\
+6 & API tạo đơn & \texttt{POST /orders}, validate, đơn \texttt{PENDING}, tổng tiền do server tính & Long & \#31 \\
+7 & Đăng ký, đăng nhập & \texttt{POST /auth/register}, \texttt{/auth/login}, bcrypt, JWT, guard; giao diện đăng nhập & Long, Tài & \#32, \#46 \\
+8 & Thanh toán không tiền mặt & \texttt{POST /payments} (Ví/Thẻ); màn thanh toán và xác nhận & Long, Tài & \#37, \#35 \\
+9 & Xác nhận, lịch sử, bàn giao & \texttt{GET /orders/me}, màn lịch sử, Docker Compose 3 dịch vụ, README & Long, Tài & \#38, \#36, \#43 \\
+10 & Nghiệp vụ backend & Xem mục~\ref{sec:t10} & Long & \#39--\#42, \#56--\#58 \\ \bottomrule
+\end{tabularx}
+\caption{Đối chiếu task và hiện thực}
+\end{table}
+
+\subsection{Quy tắc nghiệp vụ đã chốt}
+\begin{itemize}
+  \item \textbf{Tổng tiền do server tính}: $\sum \text{quantity}\times(\text{giá} + \text{phụ thu size} + \text{giá topping})$.
+        Size S/M/L: $+0$/$+5.000$/$+10.000$đ. Topping: trân châu 8.000, kem cheese 10.000, thạch cà phê 6.000đ
+        (\fpath{backend/src/orders/pricing.ts}). Client gửi giá lên bị từ chối (400).
+  \item \textbf{Thanh toán mô phỏng}: thẻ có 4 số cuối \texttt{0000} bị từ chối; Ví từ chối khi đơn trên 500.000đ.
+  \item Mật khẩu băm \texttt{bcryptjs}; không có giá trị mặc định cho \texttt{JWT\_SECRET}.
+\end{itemize}
+
+% =====================================================================
+\section{Task 10: nghiệp vụ backend}\label{sec:t10}
+Đề yêu cầu bốn ý và ba tiêu chí chấm: (a) chặn chuyển trạng thái sai, (b) gửi hai lần cùng \texttt{Idempotency-Key}
+chỉ tạo một đơn, (c) đặt đồng thời không vượt tồn kho. Sau khi soát lại mã nguồn ngày 14/11/2026, nhóm nhận thấy
+bản hiện thực ngày 27/10 chưa đủ: máy trạng thái chỉ có 3 trạng thái, chưa có tồn kho và mã giảm giá.
+Nhóm đã bổ sung ba Pull Request (\#56, \#57, \#58) và chạy lại toàn bộ kiểm thử.
+
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{@{}L{3.6cm} X l@{}}
+\toprule \textbf{Ý của đề} & \textbf{Hiện thực} & \textbf{PR} \\ \midrule
+1. State machine & 7 trạng thái, 8 chuyển hợp lệ, \texttt{assertTransition} trả 409 nếu sai & \#39, \#57 \\
+2. Idempotency & Header \texttt{Idempotency-Key} cho \texttt{POST /orders} và \texttt{POST /payments}, ràng buộc duy nhất ở DB & \#40 \\
+3. Đồng thời / tồn kho & Khóa lạc quan \texttt{version} cho đơn; cột \texttt{Product.stock}, trừ kho nguyên tử & \#41, \#56 \\
+4. Khuyến mãi, điểm thưởng & Mã giảm giá \texttt{BREW10}, \texttt{GIAM15K}; tích 1 điểm / 1.000đ & \#42, \#58 \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{State machine đơn hàng}
+\begin{figure}[H]\centering
+\begin{tikzpicture}[node distance=14mm and 9mm, every node/.style={font=\scriptsize\ttfamily},
+  st/.style={draw, rounded corners=2pt, minimum width=19mm, minimum height=7mm, fill=sgugray},
+  fin/.style={st, fill=sguline}, ar/.style={-{Stealth[length=2mm]}, thin}]
+  \node[st] (pe) {PENDING};
+  \node[st, right=of pe] (pa) {PAID};
+  \node[st, right=of pa] (pr) {PREPARING};
+  \node[st, right=of pr] (rd) {READY};
+  \node[fin, right=of rd] (co) {COMPLETED};
+  \node[st, below=of pa] (pf) {PAYMENT\_FAILED};
+  \node[fin, below=of pe] (ca) {CANCELLED};
+  \draw[ar] (pe) -- node[above]{OK} (pa);
+  \draw[ar] (pa) -- (pr);
+  \draw[ar] (pr) -- (rd);
+  \draw[ar] (rd) -- (co);
+  \draw[ar] (pe) -- node[below, sloped]{lỗi} (pf);
+  \draw[ar] (pf) -- node[right]{trả lại} (pa);
+  \draw[ar] (pe) -- node[left]{hủy} (ca);
+  \draw[ar] (pf) -- node[above]{hủy} (ca);
+\end{tikzpicture}
+\caption{Vòng đời đơn (nguồn: \fpath{backend/src/orders/order-status.ts}). Ba bước PAID $\rightarrow$ COMPLETED do nhân viên thực hiện.}
+\end{figure}
+\codefile{17}{25}{../../backend/src/orders/order-status.ts}
+
+Chỉ nhân viên (cột \texttt{User.role = STAFF}) mới gọi được \texttt{PATCH /orders/:id/status} và \texttt{GET /orders/queue};
+khách gọi nhận 403. Vai trò được đọc từ cơ sở dữ liệu ở mỗi lần gọi để việc hạ quyền có hiệu lực ngay.
+Đơn đã \texttt{PAID} không hủy được (hoàn tiền nằm ngoài phạm vi).
+Mọi lần đổi trạng thái đều qua \texttt{assertTransition} và khóa lạc quan.
+
+\subsection{Chống gửi trùng và khóa lạc quan}
+Khóa duy nhất \texttt{@@unique([userId, idempotencyKey])} (đơn) và \texttt{@@unique([orderId, idempotencyKey])} (thanh toán)
+làm cho yêu cầu lặp trả lại kết quả cũ. Hai yêu cầu cùng khóa đến cùng lúc: bên thua bắt lỗi \texttt{P2002} và trả kết quả của bên thắng.
+Cột \texttt{Order.version} tăng 1 sau mỗi lần ghi; câu lệnh cập nhật có điều kiện \texttt{where: \{ id, version \}}, không khớp thì 409.
+
+\subsection{Tồn kho khi đặt đồng thời}
+\codefile{57}{87}{../../backend/src/orders/orders.service.ts}
+Phép trừ \texttt{UPDATE ... WHERE stock >= số ly} là một câu lệnh nguyên tử, nên hai giao dịch đồng thời không thể cùng thấy
+``còn hàng''. Hết hàng thì ném 409 và giao dịch hoàn lại các món đã trừ. Hủy đơn hoàn lại kho trong cùng giao dịch.
+Migration thêm \texttt{CHECK ("stock" >= 0)} làm chốt chặn cuối ở cơ sở dữ liệu.
+
+\subsection{Khuyến mãi và điểm thưởng}
+\texttt{POST /orders} nhận \texttt{promoCode} tùy chọn (không phân biệt hoa thường). \texttt{BREW10} giảm 10\%, tối đa 20.000đ;
+\texttt{GIAM15K} giảm 15.000đ cho đơn từ 50.000đ. Mã sai hoặc đơn chưa đủ giá trị trả 400 và không trừ kho.
+\texttt{total} là số phải trả sau giảm nên thanh toán và điểm thưởng tự tính trên số đã giảm. Điểm thưởng: 1 điểm / 1.000đ,
+làm tròn xuống, cộng trong cùng giao dịch với việc chuyển đơn sang \texttt{PAID}; thanh toán lỗi hoặc gửi lại cùng khóa thì không cộng thêm.
+
+% =====================================================================
+\section{API}
+\begin{table}[H]\centering\footnotesize
+\begin{tabularx}{\textwidth}{@{}l l X l@{}}
+\toprule \textbf{Phương thức} & \textbf{Đường dẫn} & \textbf{Mô tả} & \textbf{Quyền} \\ \midrule
+GET & \texttt{/}, \texttt{/docs} & Kiểm tra backend; Swagger & công khai \\
+GET & \texttt{/products} & Menu, kèm \texttt{stock} & công khai \\
+POST & \texttt{/auth/register}, \texttt{/auth/login} & Đăng ký, đăng nhập (trả \texttt{accessToken}) & công khai \\
+POST & \texttt{/orders} & Đặt đơn; \texttt{Idempotency-Key}, \texttt{promoCode} tùy chọn & khách \\
+GET & \texttt{/orders/me} & Lịch sử đơn, mới nhất trước & khách \\
+POST & \texttt{/orders/:id/cancel} & Hủy đơn chưa thanh toán, hoàn kho & khách \\
+POST & \texttt{/payments} & Thanh toán Ví/Thẻ; \texttt{Idempotency-Key} tùy chọn & khách \\
+GET & \texttt{/orders/queue} & Hàng đợi pha chế & nhân viên \\
+PATCH & \texttt{/orders/:id/status} & \texttt{PREPARING} $\rightarrow$ \texttt{READY} $\rightarrow$ \texttt{COMPLETED} & nhân viên \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Kiểm thử và kết quả}
+Số liệu dưới đây lấy từ lần chạy ngày 14/11/2026 trên nhánh \texttt{main} sau khi merge PR \#58.
+
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule \textbf{Hạng mục} & \textbf{Nội dung} & \textbf{Kết quả} \\ \midrule
+Lint, build backend & \texttt{oxlint}, \texttt{nest build} & không lỗi \\
+Unit test & Vitest, 9 file (auth, orders, payments, products, swagger, state machine, mã giảm giá, loyalty, health) & 93/93 qua \\
+Test trên PostgreSQL thật & 3 test tồn kho + 1 test health (\texttt{npm run test:e2e}) & 4/4 qua \\
+Postman/newman & 4 request, 12 assertion (health, products, 404, Swagger) & 12/12 qua \\
+Độ phủ (v8), toàn backend & dòng / nhánh / hàm & 83,2\% / 75,4\% / 88,4\% \\
+Độ phủ, \texttt{orders}, \texttt{payments} & dòng & 97,1\%, 96,2\% \\
+CI GitHub Actions & job \texttt{backend}, \texttt{backend-db}, \texttt{frontend}, \texttt{docker} & xanh ở PR \#56, \#57, \#58 \\
+CD & đóng gói ảnh Docker backend lên GHCR khi merge vào \texttt{main} & xanh \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Ba tiêu chí chấm của Task 10}
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Chặn chuyển trạng thái sai}: \fpath{order-status.spec.ts} duyệt đủ $7\times7=49$ cặp trạng thái, chỉ 8 cặp hợp lệ;
+        8 trường hợp cấm cụ thể (ví dụ \texttt{PAID}$\rightarrow$\texttt{CANCELLED}, \texttt{PAID}$\rightarrow$\texttt{READY}) trả 409.
+  \item \textbf{Gửi hai lần cùng \texttt{Idempotency-Key} chỉ tạo một đơn}: các test \texttt{POST /orders với Idempotency-Key}
+        (gửi lại, hai yêu cầu cùng lúc, sai định dạng) và test thanh toán gửi lại không cộng điểm lần nữa.
+  \item \textbf{Đặt đồng thời không vượt tồn kho}: \fpath{backend/test/ton-kho.e2e-spec.ts} chạy trên PostgreSQL thật:
+        20 khách cùng đặt 1 ly khi kho còn 5 $\Rightarrow$ đúng 5 đơn thành công, 15 yêu cầu nhận 409, kho về 0,
+        tổng số ly đã bán bằng 5. Một test khác chứng minh đơn có một món thiếu hàng thì không trừ kho món nào,
+        và cơ sở dữ liệu từ chối \texttt{stock = -1}. CI chạy các test này ở job \texttt{backend-db}.
+\end{enumerate}
+
+\subsection{Chạy thử luồng thật}
+Backend chạy thật trên PostgreSQL tạm (cổng riêng), gọi bằng \texttt{curl}. Kết quả rút gọn:
+\begin{Verbatim}[fontsize=\footnotesize, frame=lines, framerule=0.3pt, rulecolor=\color{sguline}]
+Đặt 2 ly M + mã brew10   -> 201 PENDING, total 61.200, discount 6.800, promoCode BREW10
+Đặt 2 ly khi kho còn 1    -> 409 "Sản phẩm 1 không đủ hàng cho 2 ly"
+Mã giảm giá sai           -> 400 "Mã giảm giá SAI không hợp lệ"
+Thanh toán ví             -> 201 PAID, pointsEarned 61
+Khách gọi API nhân viên   -> 403
+Nhân viên PAID->COMPLETED -> 409 "Không thể chuyển đơn từ PAID sang COMPLETED"
+Nhân viên PREPARING, READY, COMPLETED -> 200 lần lượt
+Hủy đơn đã COMPLETED      -> 409
+Đặt 1 ly rồi hủy          -> kho 0 -> 1 (hoàn kho)
+Thanh toán đơn đã hủy     -> 409 "Đơn đang ở trạng thái CANCELLED, không thể thanh toán"
+\end{Verbatim}
+
+% =====================================================================
+\section{Phân công và bằng chứng đóng góp}
+Số liệu lấy từ \texttt{git} và GitHub ngày 14/11/2026, tính đến trước 3 Pull Request bổ sung \#56--\#58 (đều của Long).
+
+\begin{table}[H]\centering\small
+\begin{tabularx}{\textwidth}{@{}l X r r@{}}
+\toprule \textbf{Nội dung} & \textbf{Cách tính} & \textbf{Long} & \textbf{Tài} \\ \midrule
+Pull Request đã merge & theo tiền tố nhánh \texttt{long/}, \texttt{tai/}; PR khởi tạo \#1, \#2 tính theo người đặt tên nhánh & 26 & 10 \\
+Issue được giao & \#3 đến \#19 (17 issue); \#19 giao cho cả hai & 11 & 5 \\
+Commit không tính merge & \texttt{git shortlog -sn --no-merges}, theo tác giả git & 43 & 8 \\
+Dòng mã thêm / xóa & \texttt{git log --numstat} trong \fpath{backend/}, \fpath{frontend/} & +18.600 / $-$886 & +11.686 / $-$324 \\ \bottomrule
+\end{tabularx}
+\caption{Bằng chứng đóng góp theo từng thành viên}
+\end{table}
+
+\textbf{Long} phụ trách toàn bộ backend: khởi tạo NestJS, API sản phẩm, đơn hàng, xác thực JWT, thanh toán, lịch sử đơn,
+bốn phần của Task 10 cùng phần bổ sung tồn kho, mã giảm giá, vòng đời đơn; CI/CD, Docker Compose, README, Swagger/Postman.
+\textbf{Tài} phụ trách frontend: khởi tạo Next.js, trang Menu, chi tiết sản phẩm, giỏ hàng, màn thanh toán và xác nhận, lịch sử đơn.
+
+\begin{ghichu}
+\textbf{Lưu ý để đọc số liệu đúng.} Một số Pull Request nhánh \texttt{tai/} (\#46 giao diện đăng nhập, \#48 responsive di động,
+\#52 cấu hình URL backend động) có commit mang tài khoản git của Long, nên số commit theo tác giả của Tài thấp hơn khối lượng
+frontend thực tế. Vì vậy báo cáo trình bày nhiều cách tính (theo nhánh, theo issue, theo tác giả) và không quy về một tỷ lệ phần trăm.
+\end{ghichu}
+
+% =====================================================================
+\section{Hạn chế và hướng phát triển}
+\begin{itemize}
+  \item \textbf{Frontend chưa dùng các API bổ sung ngày 14/11}: nút hủy đơn, ô nhập mã giảm giá, màn hình hàng đợi cho nhân viên,
+        hiển thị tồn kho. Các API này đã chạy và có test ở backend; phần giao diện thuộc phạm vi của Tài.
+  \item Lịch sử đơn của frontend khi lỗi mạng tự chuyển sang dữ liệu mẫu, chưa phân biệt rõ với dữ liệu thật.
+  \item Mã giảm giá cố định trong mã nguồn (\fpath{promo.ts}), chưa có bảng, hạn dùng hay số lượt dùng.
+  \item Tồn kho tính theo ly sản phẩm, chưa theo nguyên liệu; hoàn tiền cho đơn đã thanh toán nằm ngoài phạm vi.
+  \item Vai trò nhân viên cấp bằng cách sửa cột \texttt{role} trong cơ sở dữ liệu, chưa có giao diện quản trị.
+\end{itemize}
+Các nội dung phân tích thiết kế (SRS, use-case, activity/sequence/class, kiến trúc, ADR, triển khai production) được làm ở Assignment 2.
+
+% =====================================================================
+\begin{thebibliography}{9}
+\bibitem{nest} NestJS Documentation, \url{https://docs.nestjs.com}.
+\bibitem{prisma} Prisma ORM Documentation, \url{https://www.prisma.io/docs}.
+\bibitem{next} Next.js Documentation, \url{https://nextjs.org/docs}.
+\bibitem{idem} IETF, \emph{The Idempotency-Key HTTP Header Field} (bản thảo), \url{https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/}.
+\bibitem{de} Đề bài lớn \emph{BrewLite -- Công nghệ phần mềm}, Trường Đại học Sài Gòn, 2026.
+\end{thebibliography}
+\end{document}
