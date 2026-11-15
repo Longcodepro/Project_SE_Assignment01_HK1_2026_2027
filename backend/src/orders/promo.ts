@@ -2,7 +2,12 @@ import { BadRequestException } from '@nestjs/common';
 
 // Mã giảm giá cố định trong code, giống bảng giá ở pricing.ts.
 // ponytail: không có bảng PromoCode trong DB, hạn dùng hay số lượt; thêm bảng khi cần quản lý mã qua giao diện.
-type Promo = { percent?: number; amount?: number; maxDiscount?: number; minSubtotal: number };
+type Promo = {
+  percent?: number;
+  amount?: number;
+  maxDiscount?: number;
+  minSubtotal: number;
+};
 
 export const PROMO_CODES: Record<string, Promo> = {
   // Giảm 10%, tối đa 20.000đ
