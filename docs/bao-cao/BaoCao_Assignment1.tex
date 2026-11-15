@@ -15,7 +15,7 @@
 % =====================================================================
 \section{Giới thiệu}
 \subsection{Đề tài và mục tiêu}
-BrewLite là ứng dụng đặt đồ uống không dùng tiền mặt. Luồng nghiệp vụ tối thiểu theo đề:
+BrewLite là ứng dụng đặt đồ uống không dùng tiền mặt. Luồng nghiệp vụ tối thiểu theo đề~\cite{de}:
 \emph{xem menu $\rightarrow$ chọn size/topping $\rightarrow$ giỏ hàng $\rightarrow$ đặt đơn $\rightarrow$ thanh toán $\rightarrow$ theo dõi đơn}.
 Assignment 1 chấm \textbf{việc hiện thực chạy được từ đầu đến cuối} theo quy trình Agile Scrum: 10 task, mỗi task 1 điểm,
 công nghệ bắt buộc NestJS (backend) và Next.js (frontend). Các sơ đồ phân tích thiết kế, SRS và kiến trúc thuộc phạm vi
@@ -29,6 +29,7 @@ Assignment 2 và không đưa vào báo cáo này.
 \tenLong{} & \texttt{Longcodepro} & Backend, DevOps, Scrum Master & \fpath{backend/}, \fpath{.github/}, \fpath{docker-compose.yml} \\
 \tenTai{} & \texttt{TaiTran263} & Frontend, UI/UX & \fpath{frontend/} \\ \bottomrule
 \end{tabularx}
+\caption{Thành viên và phân công khu vực mã}
 \end{table}
 Kho mã: \url{https://github.com/Longcodepro/Project_SE_Assignment01_HK1_2026_2027}. Mỗi bài tập có một kho riêng;
 kho của Assignment 1 dùng để \emph{kiểm chứng phân công}: mỗi chức năng một nhánh, một Pull Request, một issue,
@@ -38,13 +39,14 @@ nên có thể truy từ từng task về người thực hiện.
 \begin{table}[H]\centering\small
 \begin{tabularx}{\textwidth}{@{}l X@{}}
 \toprule \textbf{Thành phần} & \textbf{Công nghệ} \\ \midrule
-Frontend & Next.js 16 (App Router), TypeScript, Tailwind CSS, Zustand (giỏ hàng, phiên đăng nhập), Axios \\
-Backend & NestJS 12, TypeScript (ESM), class-validator, JWT, \texttt{bcryptjs}, Swagger tại \texttt{/docs} \\
-Cơ sở dữ liệu & PostgreSQL 16, Prisma 7 (7 migration đến 27/10, thêm 3 migration ở mục~\ref{sec:t10}) \\
+Frontend & Next.js 16~\cite{next} (App Router), TypeScript, Tailwind CSS, Zustand (giỏ hàng, phiên đăng nhập), Axios \\
+Backend & NestJS 12~\cite{nest}, TypeScript (ESM), class-validator, JWT, \texttt{bcryptjs}, Swagger tại \texttt{/docs} \\
+Cơ sở dữ liệu & PostgreSQL 16, Prisma 7~\cite{prisma} (7 migration đến 27/10, thêm 3 migration ở mục~\ref{sec:t10}) \\
 Thanh toán & Cổng thanh toán mô phỏng (Ví / Thẻ) viết trong \fpath{payments/mock-gateway.ts} \\
 Kiểm thử & Vitest + Supertest (unit), test tích hợp trên PostgreSQL thật, Postman/newman \\
 DevOps & Docker Compose (3 dịch vụ), GitHub Actions CI/CD, ảnh Docker đẩy lên GHCR \\ \bottomrule
 \end{tabularx}
+\caption{Công nghệ sử dụng}
 \end{table}
 
 % =====================================================================
@@ -66,7 +68,7 @@ Ngoài sprint & \#18 CD (đóng gói ảnh Docker lên GHCR, cấu hình Cloudfl
 
 \subsection{Quy ước làm việc}
 \begin{itemize}
-  \item Mỗi chức năng một nhánh \texttt{<tên>/task-N-mô-tả}; không đẩy trực tiếp lên \texttt{main}.
+  \item Mỗi chức năng một nhánh \texttt{<tên>/task-N-mo-ta}; không đẩy trực tiếp lên \texttt{main}.
   \item Commit dạng \texttt{<loại>(task-N): <mô tả>} bằng tiếng Việt, mỗi commit một mục đích.
   \item Mỗi Pull Request gắn một issue (\texttt{Closes}/\texttt{Refs \#N}); CI phải xanh mới merge.
   \item Trước khi commit backend: \texttt{npm run lint \&\& npm run build \&\& npm test}.
@@ -76,7 +78,7 @@ Ngoài sprint & \#18 CD (đóng gói ảnh Docker lên GHCR, cấu hình Cloudfl
 \section{Hiện thực 10 task}
 Bảng sau đối chiếu từng task của đề với hiện thực. Cột PR là Pull Request đã merge vào \texttt{main}.
 
-\begin{table}[H]\centering\footnotesize
+\begin{table}[!htbp]\centering\footnotesize
 \begin{tabularx}{\textwidth}{@{}c L{3.3cm} X l l@{}}
 \toprule \textbf{\#} & \textbf{Task của đề} & \textbf{Hiện thực} & \textbf{Người} & \textbf{PR} \\ \midrule
 1 & Khởi tạo dự án & Hai thư mục \texttt{frontend}, \texttt{backend}, Docker, README, \texttt{.env.example} & Tài, Long & \#1, \#2 \\
@@ -117,6 +119,7 @@ Nhóm đã bổ sung ba Pull Request (\#56, \#57, \#58) và chạy lại toàn b
 3. Đồng thời / tồn kho & Khóa lạc quan \texttt{version} cho đơn; cột \texttt{Product.stock}, trừ kho nguyên tử & \#41, \#56 \\
 4. Khuyến mãi, điểm thưởng & Mã giảm giá \texttt{BREW10}, \texttt{GIAM15K}; tích 1 điểm / 1.000đ & \#42, \#58 \\ \bottomrule
 \end{tabularx}
+\caption{Các ý của Task 10 và hiện thực}
 \end{table}
 
 \subsection{State machine đơn hàng}
@@ -150,7 +153,7 @@ khách gọi nhận 403. Vai trò được đọc từ cơ sở dữ liệu ở 
 Mọi lần đổi trạng thái đều qua \texttt{assertTransition} và khóa lạc quan.
 
 \subsection{Chống gửi trùng và khóa lạc quan}
-Khóa duy nhất \texttt{@@unique([userId, idempotencyKey])} (đơn) và \texttt{@@unique([orderId, idempotencyKey])} (thanh toán)
+Cơ chế \texttt{Idempotency-Key} theo bản thảo của IETF~\cite{idem}. Khóa duy nhất \texttt{@@unique([userId, idempotencyKey])} (đơn) và \texttt{@@unique([orderId, idempotencyKey])} (thanh toán)
 làm cho yêu cầu lặp trả lại kết quả cũ. Hai yêu cầu cùng khóa đến cùng lúc: bên thua bắt lỗi \texttt{P2002} và trả kết quả của bên thắng.
 Cột \texttt{Order.version} tăng 1 sau mỗi lần ghi; câu lệnh cập nhật có điều kiện \texttt{where: \{ id, version \}}, không khớp thì 409.
 
@@ -181,24 +184,26 @@ POST & \texttt{/payments} & Thanh toán Ví/Thẻ; \texttt{Idempotency-Key} tùy
 GET & \texttt{/orders/queue} & Hàng đợi pha chế & nhân viên \\
 PATCH & \texttt{/orders/:id/status} & \texttt{PREPARING} $\rightarrow$ \texttt{READY} $\rightarrow$ \texttt{COMPLETED} & nhân viên \\ \bottomrule
 \end{tabularx}
+\caption{Các API của backend}
 \end{table}
 
 % =====================================================================
 \section{Kiểm thử và kết quả}
 Số liệu dưới đây lấy từ lần chạy ngày 14/11/2026 trên nhánh \texttt{main} sau khi merge PR \#58.
 
-\begin{table}[H]\centering\small
+\begin{table}[!htbp]\centering\small
 \begin{tabularx}{\textwidth}{@{}l X l@{}}
 \toprule \textbf{Hạng mục} & \textbf{Nội dung} & \textbf{Kết quả} \\ \midrule
 Lint, build backend & \texttt{oxlint}, \texttt{nest build} & không lỗi \\
 Unit test & Vitest, 9 file (auth, orders, payments, products, swagger, state machine, mã giảm giá, loyalty, health) & 93/93 qua \\
 Test trên PostgreSQL thật & 3 test tồn kho + 1 test health (\texttt{npm run test:e2e}) & 4/4 qua \\
 Postman/newman & 4 request, 12 assertion (health, products, 404, Swagger) & 12/12 qua \\
-Độ phủ (v8), toàn backend & dòng / nhánh / hàm & 83,2\% / 75,4\% / 88,4\% \\
+Độ phủ (v8), toàn backend & dòng / nhánh / hàm (tính cả tệp chưa được test nạp) & 80,2\% / 75,4\% / 84,9\% \\
 Độ phủ, \texttt{orders}, \texttt{payments} & dòng & 97,1\%, 96,2\% \\
 CI GitHub Actions & job \texttt{backend}, \texttt{backend-db}, \texttt{frontend}, \texttt{docker} & xanh ở PR \#56, \#57, \#58 \\
 CD & đóng gói ảnh Docker backend lên GHCR khi merge vào \texttt{main} & xanh \\ \bottomrule
 \end{tabularx}
+\caption{Kết quả kiểm thử và CI/CD}
 \end{table}
 
 \subsection{Ba tiêu chí chấm của Task 10}
@@ -215,6 +220,7 @@ CD & đóng gói ảnh Docker backend lên GHCR khi merge vào \texttt{main} & x
 
 \subsection{Chạy thử luồng thật}
 Backend chạy thật trên PostgreSQL tạm (cổng riêng), gọi bằng \texttt{curl}. Kết quả rút gọn:
+\noindent\begin{minipage}{\textwidth}
 \begin{Verbatim}[fontsize=\footnotesize, frame=lines, framerule=0.3pt, rulecolor=\color{sguline}]
 Đặt 2 ly M + mã brew10   -> 201 PENDING, total 61.200, discount 6.800, promoCode BREW10
 Đặt 2 ly khi kho còn 1    -> 409 "Sản phẩm 1 không đủ hàng cho 2 ly"
@@ -227,6 +233,7 @@ Hủy đơn đã COMPLETED      -> 409
 Đặt 1 ly rồi hủy          -> kho 0 -> 1 (hoàn kho)
 Thanh toán đơn đã hủy     -> 409 "Đơn đang ở trạng thái CANCELLED, không thể thanh toán"
 \end{Verbatim}
+\end{minipage}
 
 % =====================================================================
 \section{Phân công và bằng chứng đóng góp}
@@ -236,7 +243,7 @@ Số liệu lấy từ \texttt{git} và GitHub ngày 14/11/2026, tính đến tr
 \begin{tabularx}{\textwidth}{@{}l X r r@{}}
 \toprule \textbf{Nội dung} & \textbf{Cách tính} & \textbf{Long} & \textbf{Tài} \\ \midrule
 Pull Request đã merge & theo tiền tố nhánh \texttt{long/}, \texttt{tai/}; PR khởi tạo \#1, \#2 tính theo người đặt tên nhánh & 26 & 10 \\
-Issue được giao & \#3 đến \#19 (17 issue); \#19 giao cho cả hai & 11 & 5 \\
+Issue được giao & \#3 đến \#19 (17 issue), không tính \#19 giao cho cả hai & 11 & 5 \\
 Commit không tính merge & \texttt{git shortlog -sn --no-merges}, theo tác giả git & 43 & 8 \\
 Dòng mã thêm / xóa & \texttt{git log --numstat} trong \fpath{backend/}, \fpath{frontend/} & +18.600 / $-$886 & +11.686 / $-$324 \\ \bottomrule
 \end{tabularx}
@@ -266,6 +273,7 @@ frontend thực tế. Vì vậy báo cáo trình bày nhiều cách tính (theo 
 Các nội dung phân tích thiết kế (SRS, use-case, activity/sequence/class, kiến trúc, ADR, triển khai production) được làm ở Assignment 2.
 
 % =====================================================================
+\addcontentsline{toc}{section}{Tài liệu}
 \begin{thebibliography}{9}
 \bibitem{nest} NestJS Documentation, \url{https://docs.nestjs.com}.
 \bibitem{prisma} Prisma ORM Documentation, \url{https://www.prisma.io/docs}.
