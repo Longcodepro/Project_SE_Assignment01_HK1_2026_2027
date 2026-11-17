@@ -1,3 +1,7 @@
+// =============================================================================
+// PAYMENTS CONTROLLER - CÁC ENDPOINT THANH TOÁN
+// =============================================================================
+
 import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -17,26 +21,26 @@ import { PaymentsService } from './payments.service.js';
 
 @ApiTags('payments')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'Thiếu hoặc sai token' })
+@ApiUnauthorizedResponse({ description: 'Thiếu hoặc sai JWT token xác thực' })
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Thanh toán mô phỏng bằng Ví hoặc Thẻ' })
+  @ApiOperation({ summary: 'Thanh toán đơn hàng qua cổng mô phỏng (Ví điện tử hoặc Thẻ)' })
   @ApiHeader({
     name: 'Idempotency-Key',
     required: false,
-    description: '1-128 ký tự [A-Za-z0-9_-]; gửi lại cùng key trả kết quả cũ, không trừ tiền lần nữa',
+    description: 'Khóa chống thanh toán trùng: gửi lại cùng key trả kết quả cũ, không trừ tiền lần 2',
   })
   @ApiCreatedResponse({
     type: PaymentResponseDto,
-    description: 'Cả khi bị từ chối: status = PAYMENT_FAILED kèm reason',
+    description: 'Kết quả thanh toán: Trạng thái PAID nếu thành công hoặc PAYMENT_FAILED nếu bị từ chối',
   })
-  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy đơn hàng' })
-  @ApiConflictResponse({ description: 'Đơn đã thanh toán hoặc bị xử lý đồng thời' })
+  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ (ví dụ: thiếu thông tin thẻ)' })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy đơn hàng của bạn' })
+  @ApiConflictResponse({ description: 'Đơn hàng đã được thanh toán hoặc đang được xử lý đồng thời' })
   pay(
     @CurrentUser() user: AuthUser,
     @Body() dto: CreatePaymentDto,

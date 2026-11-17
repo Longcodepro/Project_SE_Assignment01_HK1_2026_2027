@@ -1,3 +1,7 @@
+// =============================================================================
+// MAIN ENTRYPOINT - KHỞI CHẠY BACKEND NESTJS (ASSIGNMENT 1)
+// =============================================================================
+
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
@@ -6,10 +10,12 @@ import { createValidationPipe } from './common/validation.js';
 import { AppModule, ObserveInstrument } from './app.module.js';
 
 async function bootstrap() {
+  // 1. Khởi tạo ứng dụng NestJS từ AppModule
   const app = await NestFactory.create(AppModule, {
     instrument: ObserveInstrument,
   });
 
+  // 2. Middleware ghi log HTTP: đo thời gian phản hồi (duration) và mã trạng thái
   const httpLogger = new Logger('HTTP');
   app.use((req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
@@ -29,9 +35,13 @@ async function bootstrap() {
     next();
   });
 
+  // 3. Thiết lập tài liệu API tự động (Swagger UI tại /docs và OpenAPI JSON tại /docs-json)
   setupSwagger(app);
+
+  // 4. Kích hoạt ValidationPipe toàn cục: tự động kiểm tra DTO và loại bỏ các trường lạ
   app.useGlobalPipes(createValidationPipe());
 
+  // 5. Cấu hình bảo mật chia sẻ tài nguyên (CORS) cho phép frontend kết nối
   const rawFrontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4001';
   const allowedOrigins = rawFrontendUrl.split(',').map((u) => u.trim());
 
@@ -52,6 +62,11 @@ async function bootstrap() {
     },
     credentials: true,
   });
-  await app.listen(process.env.PORT ?? 4000);
+
+  // 6. Lắng nghe tại cổng PORT (mặc định cổng 4000)
+  const port = process.env.PORT ?? 4000;
+  await app.listen(port);
+  Logger.log(`Ứng dụng BrewLite Backend đang chạy tại http://localhost:${port}`, 'Bootstrap');
 }
+
 await bootstrap();

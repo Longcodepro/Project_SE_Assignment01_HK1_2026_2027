@@ -1,19 +1,27 @@
+// =============================================================================
+// ORDER STATUS FINITE STATE MACHINE (FSM)
+// Máy trạng thái hữu hạn kiểm soát chuyển đổi vòng đời đơn hàng
+// =============================================================================
+
 import { ConflictException } from '@nestjs/common';
 import type { OrderStatus } from '../generated/prisma/enums.js';
 
-// Nguồn sự thật duy nhất cho vòng đời đơn hàng:
-//
-//   PENDING ──thanh toán OK──► PAID ──► PREPARING ──► READY ──► COMPLETED
-//      │  ▲                     ▲      (nhân viên)  (nhân viên) (nhân viên)
-//      │  └──────────┐          │
-//      ▼             │ thanh toán lại
-//   PAYMENT_FAILED ──┘──────────┘
-//      │
-//   (khách hủy từ PENDING hoặc PAYMENT_FAILED) ──► CANCELLED
-//
-// COMPLETED và CANCELLED là trạng thái cuối. Đơn đã PAID không hủy được
-// (hoàn tiền nằm ngoài phạm vi). Thanh toán lại mà vẫn lỗi thì đơn giữ nguyên
-// PAYMENT_FAILED, không tính là một lần chuyển trạng thái.
+/**
+ * Ma trận chuyển đổi trạng thái hợp lệ:
+ *
+ *   PENDING ──thanh toán OK──► PAID ──► PREPARING ──► READY ──► COMPLETED
+ *      │  ▲                     ▲      (nhân viên)  (nhân viên) (nhân viên)
+ *      │  └──────────┐          │
+ *      ▼             │ thanh toán lại
+ *   PAYMENT_FAILED ──┘──────────┘
+ *      │
+ *   (khách hủy từ PENDING hoặc PAYMENT_FAILED) ──► CANCELLED
+ *
+ * Quy tắc nghiệp vụ:
+ * - COMPLETED và CANCELLED là các trạng thái kết thúc (không thể chuyển đi đâu nữa).
+ * - Đơn đã PAID không được phép hủy (hoàn tiền nằm ngoài phạm vi đồ án).
+ * - Thanh toán lại mà vẫn lỗi thì đơn giữ nguyên PAYMENT_FAILED.
+ */
 export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   PENDING: ['PAID', 'PAYMENT_FAILED', 'CANCELLED'],
   PAYMENT_FAILED: ['PAID', 'CANCELLED'],
@@ -24,13 +32,17 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   CANCELLED: [],
 };
 
-// Các bước nhân viên quầy được bấm (PATCH /orders/:id/status)
+// Các bước mà Nhân viên quầy (STAFF) được phép cập nhật (PATCH /orders/:id/status)
 export const STAFF_STEPS = ['PREPARING', 'READY', 'COMPLETED'] as const;
 export type StaffStep = (typeof STAFF_STEPS)[number];
 
 export const canTransition = (from: OrderStatus, to: OrderStatus) =>
   ORDER_TRANSITIONS[from].includes(to);
 
+/**
+ * Kiểm tra tính hợp lệ của việc chuyển trạng thái:
+ * Nếu chuyển sai quy trình (ví dụ: PENDING -> READY) -> ném lỗi 409 Conflict ngay lập tức.
+ */
 export function assertTransition(from: OrderStatus, to: OrderStatus) {
   if (!canTransition(from, to)) {
     throw new ConflictException(

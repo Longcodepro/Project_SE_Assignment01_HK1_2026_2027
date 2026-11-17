@@ -1,3 +1,7 @@
+// =============================================================================
+// ORDERS SERVICE - NGHIỆP VỤ ĐẶT HÀNG, QUẢN LÝ TỒN KHO & HÀNG ĐỢI
+// =============================================================================
+
 import {
   BadRequestException,
   ConflictException,
@@ -14,12 +18,22 @@ import { assertTransition, type StaffStep } from './order-status.js';
 import { unitPrice } from './pricing.js';
 import { discountFor } from './promo.js';
 
+// Trường dữ liệu trả về thu gọn cho OrderSummaryDto
 const SUMMARY = { id: true, status: true, total: true, discount: true, promoCode: true } as const;
 
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Tạo đơn hàng mới:
+   * 1. Kiểm tra Idempotency-Key: nếu đã gửi trước đó thì trả lại đơn cũ mà không tạo mới.
+   * 2. Lấy giá sản phẩm từ DB và tính toán đơn giá từng dòng kèm phụ thu size/topping.
+   * 3. Tính mã giảm giá (nếu có) và trừ vào tổng tiền (Subtotal - Discount).
+   * 4. Thực hiện Transaction nguyên tử:
+   *    - Trừ tồn kho có điều kiện (WHERE stock >= quantity). Nếu thiếu hàng -> rollback & 409 Conflict.
+   *    - Tạo bản ghi Order và OrderItem tương ứng.
+   */
   async create(userId: number, dto: CreateOrderDto, idempotencyKey?: string) {
     const findExisting = () =>
       this.prisma.order.findUnique({
@@ -95,6 +109,9 @@ export class OrdersService {
     }
   }
 
+  /**
+   * Lấy lịch sử đơn hàng của một người dùng cụ thể (sắp xếp giảm dần theo thời gian tạo)
+   */
   async findMine(userId: number) {
     const orders = await this.prisma.order.findMany({
       where: { userId },
@@ -104,7 +121,11 @@ export class OrdersService {
     return orders.map(toHistory);
   }
 
-  // Khách hủy đơn chưa thanh toán; kho đã giữ lúc đặt được hoàn lại
+  /**
+   * Khách tự hủy đơn chưa thanh toán (ở trạng thái PENDING hoặc PAYMENT_FAILED):
+   * - Hoàn trả lại số lượng tồn kho cho các sản phẩm trong đơn.
+   * - Cập nhật trạng thái đơn thành CANCELLED qua khóa lạc quan.
+   */
   async cancel(userId: number, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
@@ -125,7 +146,9 @@ export class OrdersService {
     return summaryOf(order, 'CANCELLED');
   }
 
-  // Nhân viên quầy đẩy đơn qua PREPARING → READY → COMPLETED
+  /**
+   * Nhân viên quầy (STAFF) cập nhật trạng thái đơn: PAID → PREPARING → READY → COMPLETED
+   */
   async advance(userId: number, orderId: string, to: StaffStep) {
     await this.assertStaff(userId);
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
@@ -135,7 +158,10 @@ export class OrdersService {
     return summaryOf(order, to);
   }
 
-  // Hàng đợi của quầy: đơn đã trả tiền chưa giao, cũ nhất trước
+  /**
+   * Danh sách hàng đợi của quầy: Đơn đã trả tiền và chưa giao (PAID, PREPARING, READY),
+   * sắp xếp tăng dần theo createdAt (First In, First Out).
+   */
   async queue(userId: number) {
     await this.assertStaff(userId);
     const orders = await this.prisma.order.findMany({
@@ -146,7 +172,7 @@ export class OrdersService {
     return orders.map(toHistory);
   }
 
-  // Đọc role từ DB thay vì từ token để hạ quyền có hiệu lực ngay
+  // Đọc role trực tiếp từ DB thay vì chỉ dựa vào JWT payload để khi thu hồi quyền STAFF sẽ có hiệu lực ngay
   private async assertStaff(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -158,13 +184,13 @@ export class OrdersService {
   }
 }
 
-// Cùng hình dạng với kết quả POST /orders (OrderSummaryDto)
+// Hàm format tóm tắt đơn
 const summaryOf = (
   o: { id: string; total: number; discount: number; promoCode: string | null },
   status: OrderStatus,
 ) => ({ id: o.id, status, total: o.total, discount: o.discount, promoCode: o.promoCode });
 
-// Khoá lạc quan: chỉ ghi khi version chưa đổi kể từ lúc đọc, như payments.service.ts
+// Khóa lạc quan (Optimistic Concurrency Control): Chỉ cập nhật khi version trong DB vẫn khớp với version lúc đọc
 async function setStatus(
   tx: Pick<PrismaService, 'order'>,
   order: { id: string; version: number },
@@ -179,6 +205,7 @@ async function setStatus(
   }
 }
 
+// Cấu trúc chọn trường khi đọc lịch sử đơn hàng
 const HISTORY = {
   ...SUMMARY,
   createdAt: true,
@@ -199,6 +226,7 @@ type HistoryRow = {
   items: { product: { name: string } }[];
 };
 
+// Chuẩn hóa tên sản phẩm phẳng ra ngoài item (productName)
 const toHistory = <T extends HistoryRow>({ items, ...order }: T) => ({
   ...order,
   items: items.map(({ product, ...item }) => ({ ...item, productName: product.name })),
