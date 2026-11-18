@@ -1,5 +1,5 @@
 // =============================================================================
-// ORDERS CONTROLLER - CÁC ENDPOINT ĐẶT HÀNG, LỊCH SỬ & QUẢN LÝ ĐƠN
+// ORDERS CONTROLLER - CÁC ENDPOINT ĐẶT HÀNG & LỊCH SỬ ĐƠN (MVP)
 // =============================================================================
 
 import {
@@ -7,9 +7,6 @@ import {
   Controller,
   Get,
   Headers,
-  HttpCode,
-  Param,
-  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -18,9 +15,7 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
-  ApiForbiddenResponse,
   ApiHeader,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -29,11 +24,7 @@ import {
 import { CurrentUser, JwtAuthGuard, type AuthUser } from '../auth/jwt-auth.guard.js';
 import { parseIdempotencyKey } from '../common/idempotency.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
-import {
-  OrderHistoryDto,
-  OrderSummaryDto,
-  UpdateOrderStatusDto,
-} from './dto/order.dto.js';
+import { OrderHistoryDto, OrderSummaryDto } from './dto/order.dto.js';
 import { OrdersService } from './orders.service.js';
 
 @ApiTags('orders')
@@ -68,40 +59,5 @@ export class OrdersController {
   @ApiOkResponse({ type: OrderHistoryDto, isArray: true })
   findMine(@CurrentUser() user: AuthUser) {
     return this.ordersService.findMine(user.id);
-  }
-
-  @Get('queue')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Nhân viên quầy: xem hàng đợi các đơn PAID/PREPARING/READY (cũ nhất lên đầu)' })
-  @ApiOkResponse({ type: OrderHistoryDto, isArray: true })
-  @ApiForbiddenResponse({ description: 'Tài khoản không phải vai trò STAFF' })
-  queue(@CurrentUser() user: AuthUser) {
-    return this.ordersService.queue(user.id);
-  }
-
-  @Post(':id/cancel')
-  @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Khách tự hủy đơn chưa thanh toán (PENDING/PAYMENT_FAILED), hoàn lại tồn kho' })
-  @ApiOkResponse({ type: OrderSummaryDto, description: 'Đơn đã chuyển sang CANCELLED' })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy đơn hàng của bạn' })
-  @ApiConflictResponse({ description: 'Đơn đã thanh toán / đã hủy hoặc bị xử lý đồng thời' })
-  cancel(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.ordersService.cancel(user.id, id);
-  }
-
-  @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Nhân viên quầy cập nhật trạng thái đơn (PAID → PREPARING → READY → COMPLETED)' })
-  @ApiOkResponse({ type: OrderSummaryDto })
-  @ApiForbiddenResponse({ description: 'Tài khoản không phải vai trò STAFF' })
-  @ApiNotFoundResponse({ description: 'Không tìm thấy đơn hàng' })
-  @ApiConflictResponse({ description: 'Chuyển trạng thái sai quy trình hoặc xung đột khóa lạc quan' })
-  advance(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Body() dto: UpdateOrderStatusDto,
-  ) {
-    return this.ordersService.advance(user.id, id, dto.status);
   }
 }

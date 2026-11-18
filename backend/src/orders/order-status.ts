@@ -10,12 +10,12 @@ import type { OrderStatus } from '../generated/prisma/enums.js';
  * Ma trận chuyển đổi trạng thái hợp lệ:
  *
  *   PENDING ──thanh toán OK──► PAID ──► PREPARING ──► READY ──► COMPLETED
- *      │  ▲                     ▲      (nhân viên)  (nhân viên) (nhân viên)
+ *      │  ▲                     ▲
  *      │  └──────────┐          │
  *      ▼             │ thanh toán lại
  *   PAYMENT_FAILED ──┘──────────┘
  *      │
- *   (khách hủy từ PENDING hoặc PAYMENT_FAILED) ──► CANCELLED
+ *   (hủy từ PENDING hoặc PAYMENT_FAILED) ──► CANCELLED
  *
  * Quy tắc nghiệp vụ:
  * - COMPLETED và CANCELLED là các trạng thái kết thúc (không thể chuyển đi đâu nữa).
@@ -32,16 +32,12 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   CANCELLED: [],
 };
 
-// Các bước mà Nhân viên quầy (STAFF) được phép cập nhật (PATCH /orders/:id/status)
-export const STAFF_STEPS = ['PREPARING', 'READY', 'COMPLETED'] as const;
-export type StaffStep = (typeof STAFF_STEPS)[number];
-
 export const canTransition = (from: OrderStatus, to: OrderStatus) =>
   ORDER_TRANSITIONS[from].includes(to);
 
 /**
  * Kiểm tra tính hợp lệ của việc chuyển trạng thái:
- * Nếu chuyển sai quy trình (ví dụ: PENDING -> READY) -> ném lỗi 409 Conflict ngay lập tức.
+ * Nếu chuyển sai quy trình -> ném lỗi 409 Conflict ngay lập tức.
  */
 export function assertTransition(from: OrderStatus, to: OrderStatus) {
   if (!canTransition(from, to)) {
