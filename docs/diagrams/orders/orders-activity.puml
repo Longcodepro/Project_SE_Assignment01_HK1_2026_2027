@@ -1,0 +1,95 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam ranksep 35
+skinparam nodesep 50
+
+|Khách hàng|
+start
+:Kiểm tra giỏ hàng và chọn "Đặt hàng";
+:Nhập mã giảm giá (nếu có) và bấm "Xác nhận";
+
+|Giao diện Next.js|
+:Sinh khóa chống gửi trùng Idempotency-Key;
+:Gửi yêu cầu HTTP POST /orders\n(kèm Bearer Token, Idempotency-Key và Items);
+
+|Backend (NestJS)|
+if (Xác thực JWT Token?) then ([không hợp lệ])
+  :Báo lỗi 401 Unauthorized;
+  |Giao diện Next.js|
+  :Yêu cầu khách đăng nhập lại;
+  |Khách hàng|
+  stop
+endif
+
+|Backend (NestJS)|
+if (Kiểm tra dữ liệu CreateOrderDto?) then ([sai định dạng])
+  :Báo lỗi 400 Bad Request\n(dữ liệu sai hoặc giỏ hàng trống);
+  |Giao diện Next.js|
+  :Hiển thị thông báo lỗi dữ liệu;
+  |Khách hàng|
+  stop
+endif
+
+|Cơ sở dữ liệu (PostgreSQL)|
+:Kiểm tra Idempotency-Key trong CSDL;
+
+|Backend (NestJS)|
+if (Đã tồn tại đơn hàng cũ trùng Key?) then ([đã có])
+  :Trả về ngay thông tin đơn cũ\n(chống tạo trùng và trừ kho 2 lần);
+  |Giao diện Next.js|
+  :Chuyển sang màn hình Thanh toán;
+  |Khách hàng|
+  stop
+endif
+
+|Cơ sở dữ liệu (PostgreSQL)|
+:Kiểm tra sự tồn tại của các món\n(prisma.product.findMany);
+
+|Backend (NestJS)|
+if (Tất cả sản phẩm có tồn tại?) then ([có món không tồn tại])
+  :Báo lỗi 400 Bad Request\n("Sản phẩm không tồn tại");
+  |Giao diện Next.js|
+  :Hiển thị lỗi món không tồn tại;
+  |Khách hàng|
+  stop
+endif
+
+|Backend (NestJS)|
+:Server tự tính toán lại toàn bộ đơn giá\n(Giá gốc + Phụ thu size + Giá topping);
+:Kiểm tra mã giảm giá và tính tổng tiền;
+
+|Cơ sở dữ liệu (PostgreSQL)|
+:Mở Transaction nguyên tử (prisma.$transaction);
+:Kiểm tra và trừ tồn kho (WHERE stock >= qty);
+
+|Backend (NestJS)|
+if (Tất cả sản phẩm đủ số lượng tồn kho?) then ([không đủ hàng])
+  :Hủy giao dịch (Rollback Transaction);
+  :Ném lỗi 409 Conflict ("Không đủ hàng");
+  |Giao diện Next.js|
+  :Hiển thị thông báo món đã hết hàng;
+  |Khách hàng|
+  stop
+else ([đủ hàng])
+  |Cơ sở dữ liệu (PostgreSQL)|
+  :Tạo bản ghi Order mới (status: PENDING);
+  :Lưu các dòng chi tiết OrderItem;
+  :Xác nhận giao dịch (Commit Transaction);
+  
+  |Backend (NestJS)|
+  :Trả về mã 201 Created\n(kèm id đơn, tổng tiền, giảm giá);
+  
+  |Giao diện Next.js|
+  :Xóa giỏ hàng hiện tại;
+  :Chuyển sang màn hình Thanh toán;
+  
+  |Khách hàng|
+  :Xem thông tin đơn và chọn hình thức thanh toán;
+  stop
+endif
+@enduml

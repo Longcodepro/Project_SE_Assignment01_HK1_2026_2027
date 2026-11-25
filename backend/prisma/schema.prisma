@@ -1,3 +1,8 @@
+// =============================================================================
+// PRISMA SCHEMA - BREWLITE ASSIGNMENT 1
+// Bản thiết kế cơ sở dữ liệu quan hệ PostgreSQL cho ứng dụng đặt cà phê
+// =============================================================================
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -7,93 +12,96 @@ datasource db {
   provider = "postgresql"
 }
 
+// Bảng Sản phẩm (Đồ uống trên menu)
 model Product {
-  id       Int    @id @default(autoincrement())
-  name     String
-  // VND, size S
-  price    Int
-  imageUrl String
-  // Số ly còn bán được. Trừ khi đặt đơn (orders.service.ts), DB có CHECK stock >= 0
-  stock    Int    @default(100)
+  id         Int         @id @default(autoincrement())
+  name       String      // Tên món: Cà phê sữa, Bạc xỉu...
+  price      Int         // Đơn giá chuẩn (VND, áp dụng cho size S)
+  imageUrl   String      // Đường dẫn ảnh minh họa (SVG / URL)
+  // Quản lý tồn kho: Giảm nguyên tử trong transaction lúc đặt hàng (CHECK stock >= 0)
+  stock      Int         @default(100)
   orderItems OrderItem[]
 }
 
+// Kích thước đồ uống (S: +0đ, M: +5.000đ, L: +10.000đ)
 enum Size {
   S
   M
   L
 }
 
-// Chuyển trạng thái hợp lệ nằm ở src/orders/order-status.ts
+// Máy trạng thái hữu hạn (FSM) cho vòng đời đơn hàng
+// PENDING ──thanh toán──► PAID ──► PREPARING ──► READY ──► COMPLETED
 enum OrderStatus {
-  PENDING
-  PAID
-  PAYMENT_FAILED
-  PREPARING
-  READY
-  COMPLETED
-  CANCELLED
+  PENDING         // Đơn vừa tạo, chờ thanh toán
+  PAID            // Đã thanh toán thành công, chờ quầy tiếp nhận
+  PAYMENT_FAILED  // Thanh toán thất bại (có thể thanh toán lại)
+  PREPARING       // Nhân viên quầy đang pha chế
+  READY           // Món đã xong, chờ khách lấy
+  COMPLETED       // Đã giao cho khách (kết thúc)
+  CANCELLED       // Khách tự hủy đơn trước khi thanh toán
 }
 
-// STAFF (nhân viên quầy) được chuyển đơn PAID → PREPARING → READY → COMPLETED
+// Phân quyền người dùng trong Assignment 1:
+// - CUSTOMER: Khách hàng (xem menu, tạo đơn, thanh toán, hủy đơn của mình)
+// - STAFF   : Nhân viên quầy (xem danh sách hàng đợi /queue, chuyển trạng thái đơn)
 enum Role {
   CUSTOMER
   STAFF
 }
 
+// Bảng Đơn hàng
 model Order {
-  id        String      @id
-  userId    Int
-  user      User        @relation(fields: [userId], references: [id])
-  // Client gửi lại cùng key thì trả đơn cũ thay vì tạo đơn mới
+  id             String      @id // Mã chuỗi duy nhất: ord_xxx (bảo mật, chống đoán mò số lượng đơn)
+  userId         Int
+  user           User        @relation(fields: [userId], references: [id])
+  // Khóa chống gửi trùng (Idempotency Key) trên từng khách hàng
   idempotencyKey String?
-  status    OrderStatus @default(PENDING)
-  // VND, tính ở server từ giá sản phẩm + size + topping, đã trừ discount
-  total     Int
-  // Mã giảm giá đã áp (src/orders/promo.ts) và số tiền được giảm, VND
-  promoCode String?
-  discount  Int         @default(0)
-  createdAt DateTime    @default(now())
-  // Khoá lạc quan: mỗi lần cập nhật đơn phải khớp version đã đọc, rồi tăng thêm 1
-  version   Int         @default(0)
-  items     OrderItem[]
-  payments  Payment[]
+  status         OrderStatus @default(PENDING)
+  total          Int         // Tổng tiền server tự tính = Subtotal - Discount (không nhận từ client)
+  promoCode      String?     // Mã giảm giá đã áp dụng (ví dụ: BREW10, GIAM15K)
+  discount       Int         @default(0) // Số tiền được giảm giá (VND)
+  createdAt      DateTime    @default(now())
+  // Khóa lạc quan (Optimistic Concurrency Control): tăng 1 mỗi lần cập nhật để chống race condition
+  version        Int         @default(0)
+  items          OrderItem[]
+  payments       Payment[]
 
   @@unique([userId, idempotencyKey])
   @@index([userId])
 }
 
+// Bảng Chi tiết từng món trong đơn hàng
 model OrderItem {
   id        Int      @id @default(autoincrement())
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId Int
   product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
-  size      Size
-  toppings  String[]
-  // VND, giá 1 ly đã gồm size + topping tại thời điểm đặt
-  unitPrice Int
+  quantity  Int      // Số lượng ly
+  size      Size     // Kích cỡ ly (S, M, L)
+  toppings  String[] // Danh sách topping đi kèm (tran-chau, kem-cheese, thach-cafe)
+  unitPrice Int      // Đơn giá tại thời điểm đặt = BasePrice + SizeExtra + Sum(Toppings)
 
   @@index([orderId])
 }
 
+// Bảng Người dùng & Tài khoản
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  // bcrypt hash, không bao giờ trả ra ngoài API
-  passwordHash String
-  name         String?
-  // Tích lũy khi thanh toán thành công (xem payments/loyalty.ts)
-  loyaltyPoints Int     @default(0)
-  role         Role     @default(CUSTOMER)
-  createdAt    DateTime @default(now())
-  orders       Order[]
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String   // Mật khẩu băm an toàn bằng bcryptjs (không bao giờ lộ ra ngoài API)
+  name          String?  // Họ và tên hiển thị
+  // Điểm thưởng tích lũy (Loyalty Points): 1.000đ = 1 điểm khi thanh toán thành công
+  loyaltyPoints Int      @default(0)
+  role          Role     @default(CUSTOMER)
+  createdAt     DateTime @default(now())
+  orders        Order[]
 }
 
 enum PaymentMethod {
-  WALLET
-  CARD
+  WALLET // Ví điện tử
+  CARD   // Thẻ thanh toán quốc tế / ngân hàng
 }
 
 enum PaymentStatus {
@@ -101,20 +109,18 @@ enum PaymentStatus {
   FAILED
 }
 
-// Mỗi lần thử thanh toán là một dòng, nên đơn thất bại có thể thử lại
+// Bảng Lịch sử giao dịch thanh toán
 model Payment {
-  id        Int           @id @default(autoincrement())
-  orderId   String
-  order     Order         @relation(fields: [orderId], references: [id])
-  method    PaymentMethod
-  status    PaymentStatus
-  // VND, lấy từ Order.total chứ không nhận từ client
-  amount    Int
-  failureReason  String?
-  // Điểm tích được từ lần thanh toán này, lưu lại để gửi lại cùng key vẫn trả đúng
-  pointsEarned   Int           @default(0)
-  idempotencyKey String?
-  createdAt DateTime      @default(now())
+  id             Int           @id @default(autoincrement())
+  orderId        String
+  order          Order         @relation(fields: [orderId], references: [id])
+  method         PaymentMethod
+  status         PaymentStatus
+  amount         Int           // Số tiền thanh toán (lấy từ Order.total)
+  failureReason  String?       // Lý do từ chối mô phỏng (vd: Thẻ đuôi 0000)
+  pointsEarned   Int           @default(0) // Số điểm tích được trong giao dịch này
+  idempotencyKey String?       // Khóa chống thanh toán trùng
+  createdAt      DateTime      @default(now())
 
   @@unique([orderId, idempotencyKey])
   @@index([orderId])

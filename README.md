@@ -8,6 +8,7 @@
 [![Prisma 7](https://img.shields.io/badge/Prisma_7-Postgres_Adapter-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL_16-Database-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker Compose](https://img.shields.io/badge/Docker_Compose-Multi--Container-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Vitest](https://img.shields.io/badge/Vitest-81%2F81_Passed-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Responsive-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 <p align="center">
@@ -279,12 +280,18 @@ Terminal sẽ in ra một đường link công khai dạng `https://xxxx.tryclou
 
 </div>
 
-### 📚 Tài liệu chi tiết trong thư mục `docs/`:
-- 🎓 [**Báo Cáo Bài Tập 1: User Stories & Cấu Trúc Dự Án (XeLaTeX PDF)**](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/BaoCao_BaiTap1.pdf): Bản báo cáo học thuật 12 trang A4 phân tích 13 User Stories, cấu trúc Monorepo và ưu thế vượt trội (kèm mã nguồn [`BaoCao_BaiTap1.tex`](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/BaoCao_BaiTap1.tex)).
-- 📈 [**Báo Cáo Tiến Độ Công Việc (XeLaTeX PDF)**](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/TienDoCongViec.pdf): Bản báo cáo theo dõi tiến độ đồ án 14 trang A4 (kèm mã nguồn [`TienDoCongViec.tex`](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/TienDoCongViec.tex)).
-- 📖 [**Cẩm Nang Triển Khai & Vận Hành Chi Tiết**](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/HUONG-DAN-TRIEN-KHAI-VA-CHAY.md): Bảng hợp đồng API Contract và hướng dẫn sâu về cấu hình 4 kịch bản.
-- 📜 [**Nhật Ký Commit Toàn Diện**](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/NHAT-KY-COMMIT.md): Tra cứu hơn 110 commits phân loại theo Sprint chuẩn Conventional Commits.
-- 📊 [**Nhật Ký Tiến Độ & 52 Pull Requests**](file:///home/long/Documents/University/HOCTAP/HK7/Sofware Engineering (SE)/DoAn/Project_SE_Assignment01_HK1_2026_2027/docs/NHAT-KY-TIEN-DO.md): Bảng tổng hợp chi tiết 52 PRs và biên bản cải tiến Retrospective.
+### 📚 Tài liệu chi tiết & Bộ kiểm thử:
+- 📊 [**Hệ Thống Sơ Đồ Thiết Kế & Phân Tích (Diagrams Gallery)**](./docs/diagrams/README.md): Kho sơ đồ UML đầy đủ (Database ERD, Products, Auth, Orders, Payments, Order History) chuẩn hóa bằng PlantUML và PNG raster.
+- 🧪 [**Cẩm Nang Kiểm Thử Tự Động Postman MVP (8 Kịch Bản)**](./backend/postman/README.md): Hướng dẫn thực thi bộ kịch bản kiểm thử E2E tự động qua Newman CLI (`npm run postman`) với tỷ lệ xanh 100%.
+- 🎓 [**Kho Báo Cáo Học Thuật & Đề Cương (Reports PDF)**](./docs/reports/):
+  - [Báo Cáo Assignment 1 (BaoCao_Assignment1.pdf)](./docs/reports/BaoCao_Assignment1.pdf)
+  - [Báo Cáo Đồ Án Chi Tiết - Nguyễn Thành Long](./docs/reports/report_asignment_1(Long).pdf)
+  - [Báo Cáo Tiến Độ Công Việc](./docs/reports/TienDoCongViec.pdf)
+  - [Đề Cương Ôn Tập Assignment 1](./docs/reports/DeCuong_OnTap_AS1.pdf)
+- 🚀 [**Phiên Bản Toàn Diện Hệ Thống (Assignment 2 - Monorepo)**](https://github.com/Longcodepro/Project_SE_Assignment02_HK1_2026_2027): Phiên bản nâng cấp quy mô lớn với Màn hình Bếp KDS, Quản trị Kho định lượng (BOM), Quản lý Menu/Nhân sự và hơn 600+ automated tests.
+- 📖 [**Cẩm Nang Triển Khai & Vận Hành Chi Tiết**](./docs/HUONG-DAN-TRIEN-KHAI-VA-CHAY.md): Bảng hợp đồng API Contract và hướng dẫn sâu về cấu hình 4 kịch bản.
+- 📜 [**Nhật Ký Commit Toàn Diện**](./docs/NHAT-KY-COMMIT.md): Tra cứu hơn 110 commits phân loại theo Sprint chuẩn Conventional Commits.
+- 📊 [**Nhật Ký Tiến Độ & 52 Pull Requests**](./docs/NHAT-KY-TIEN-DO.md): Bảng tổng hợp chi tiết 52 PRs và biên bản cải tiến Retrospective.
 
 ---
 

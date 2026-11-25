@@ -1,17 +1,31 @@
+// =============================================================================
+// PROMO CODES - CHÍNH SÁCH MÃ GIẢM GIÁ
+// =============================================================================
+
 import { BadRequestException } from '@nestjs/common';
 
-// Mã giảm giá cố định trong code, giống bảng giá ở pricing.ts.
-// ponytail: không có bảng PromoCode trong DB, hạn dùng hay số lượt; thêm bảng khi cần quản lý mã qua giao diện.
-type Promo = { percent?: number; amount?: number; maxDiscount?: number; minSubtotal: number };
+type Promo = {
+  percent?: number;      // Tỷ lệ giảm theo phần trăm (%)
+  amount?: number;       // Số tiền giảm cố định (VND)
+  maxDiscount?: number;  // Mức giảm tối đa (VND)
+  minSubtotal: number;   // Giá trị đơn hàng tối thiểu để được áp dụng
+};
 
+/**
+ * Danh sách mã giảm giá cố định trong hệ thống:
+ * - BREW10 : Giảm 10%, tối đa 20.000đ, không yêu cầu giá trị đơn tối thiểu.
+ * - GIAM15K: Giảm thẳng 15.000đ cho đơn từ 50.000đ trở lên.
+ */
 export const PROMO_CODES: Record<string, Promo> = {
-  // Giảm 10%, tối đa 20.000đ
   BREW10: { percent: 10, maxDiscount: 20_000, minSubtotal: 0 },
-  // Giảm 15.000đ cho đơn từ 50.000đ
   GIAM15K: { amount: 15_000, minSubtotal: 50_000 },
 };
 
-// Số tiền được giảm (VND). Mã sai hoặc đơn chưa đủ điều kiện thì 400.
+/**
+ * Tính số tiền được giảm giá (VND):
+ * - Ném lỗi 400 nếu mã không tồn tại hoặc đơn chưa đạt giá trị tối thiểu.
+ * - Đảm bảo số tiền giảm không vượt quá trần maxDiscount và không bao giờ vượt quá tổng tiền đơn.
+ */
 export function discountFor(rawCode: string, subtotal: number) {
   const code = rawCode.trim().toUpperCase();
   const promo = PROMO_CODES[code];
@@ -24,6 +38,6 @@ export function discountFor(rawCode: string, subtotal: number) {
   const raw = promo.percent
     ? Math.floor((subtotal * promo.percent) / 100)
     : (promo.amount ?? 0);
-  // Không giảm quá trần, và không bao giờ làm tổng âm
+
   return { code, discount: Math.min(raw, promo.maxDiscount ?? raw, subtotal) };
 }

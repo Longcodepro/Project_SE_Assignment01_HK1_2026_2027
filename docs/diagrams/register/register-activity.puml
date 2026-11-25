@@ -1,0 +1,51 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam ranksep 40
+skinparam nodesep 60
+
+|Khách hàng|
+start
+:Mở cửa sổ Đăng ký;
+:Nhập email, mật khẩu và họ tên;
+:Bấm nút "Đăng ký";
+
+|Giao diện Next.js|
+:Gửi yêu cầu HTTP\nPOST /auth/register;
+
+|Backend (NestJS)|
+if (Kiểm tra định dạng (RegisterDto)?) then ([sai định dạng])
+  :Báo lỗi 400 Bad Request\n(thiếu @ hoặc mật khẩu < 6 ký tự);
+  |Giao diện Next.js|
+  :Hiển thị lỗi trên form;
+  |Khách hàng|
+  stop
+else ([hợp lệ])
+  |Backend (NestJS)|
+  :Băm mật khẩu bằng bcrypt\n(salt rounds = 10);
+  |Cơ sở dữ liệu (PostgreSQL)|
+  :Thực thi prisma.user.create();
+  if (CSDL kiểm tra trùng Email (Lỗi P2002)?) then ([trùng email])
+    |Backend (NestJS)|
+    :Ném ngoại lệ 409 Conflict\n("Email đã được đăng ký");
+    |Giao diện Next.js|
+    :Hiển thị lỗi "Email đã tồn tại";
+    |Khách hàng|
+    stop
+  else ([tạo thành công])
+    |Cơ sở dữ liệu (PostgreSQL)|
+    :Lưu bản ghi mới vào bảng User;
+    |Backend (NestJS)|
+    :Trả về mã 201 Created\n(id, email, name);
+    |Giao diện Next.js|
+    :Đóng cửa sổ Đăng ký\nvà thông báo thành công;
+    |Khách hàng|
+    :Chuyển sang màn hình Đăng nhập;
+    stop
+  endif
+endif
+@enduml

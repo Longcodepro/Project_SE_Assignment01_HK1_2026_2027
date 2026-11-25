@@ -1,3 +1,7 @@
+// =============================================================================
+// AUTH SERVICE - NGHIỆP VỤ ĐĂNG KÝ VÀ ĐĂNG NHẬP
+// =============================================================================
+
 import {
   ConflictException,
   Injectable,
@@ -8,7 +12,8 @@ import bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { LoginDto, RegisterDto } from './dto/auth.dto.js';
 
-// Hash giả để login email không tồn tại vẫn tốn thời gian như email có thật
+// Giá trị băm giả: Dùng để chạy bcrypt.compare ngay cả khi email không tồn tại trong DB,
+// nhằm đảm bảo thời gian phản hồi (response time) không đổi, ngăn chặn tấn công Timing Attack
 const DUMMY_HASH = bcrypt.hashSync('khong-ton-tai', 10);
 
 @Injectable()
@@ -18,6 +23,12 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
+  /**
+   * Đăng ký tài khoản khách hàng mới:
+   * - Băm mật khẩu bằng bcrypt với salt rounds = 10.
+   * - Lưu vào DB, chặn trùng email (bắt mã lỗi P2002 của Prisma -> 409 Conflict).
+   * - Không bao giờ trả passwordHash ra ngoài.
+   */
   async register(dto: RegisterDto) {
     const passwordHash = await bcrypt.hash(dto.password, 10);
     try {
@@ -31,6 +42,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * Đăng nhập:
+   * - Tìm người dùng theo email.
+   * - So khớp mật khẩu với hash đã lưu.
+   * - Ký tạo JWT token chứa sub (userId) và email.
+   */
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },

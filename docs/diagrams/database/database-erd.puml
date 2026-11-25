@@ -1,0 +1,114 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundcorner 5
+
+title SƠ ĐỒ CƠ SỞ DỮ LIỆU - BREWLITE ASSIGNMENT 1 (MVP)
+
+entity "User" as User {
+  * **id** : Int <<PK, autoincrement>>
+  --
+  * email : String <<UQ>>
+  * passwordHash : String
+  name : String
+  * loyaltyPoints : Int = 0
+  * role : Role = CUSTOMER
+  * createdAt : DateTime = now()
+}
+
+entity "Order" as Order {
+  * **id** : String <<PK, ord_xxx>>
+  --
+  * userId : Int <<FK>>
+  idempotencyKey : String
+  * status : OrderStatus = PENDING
+  * total : Int
+  promoCode : String
+  * discount : Int = 0
+  * version : Int = 0
+  * createdAt : DateTime = now()
+  --
+  UQ(userId, idempotencyKey)
+}
+
+entity "OrderItem" as OrderItem {
+  * **id** : Int <<PK, autoincrement>>
+  --
+  * orderId : String <<FK>>
+  * productId : Int <<FK>>
+  * quantity : Int
+  * size : Size
+  * toppings : String[]
+  * unitPrice : Int
+}
+
+entity "Product" as Product {
+  * **id** : Int <<PK, autoincrement>>
+  --
+  * name : String
+  * price : Int
+  * imageUrl : String
+  * stock : Int = 100
+}
+
+entity "Payment" as Payment {
+  * **id** : Int <<PK, autoincrement>>
+  --
+  * orderId : String <<FK>>
+  * method : PaymentMethod
+  * status : PaymentStatus
+  * amount : Int
+  failureReason : String
+  * pointsEarned : Int = 0
+  idempotencyKey : String
+  * createdAt : DateTime = now()
+  --
+  UQ(orderId, idempotencyKey)
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PAYMENT_FAILED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum Size {
+  S
+  M
+  L
+}
+
+enum PaymentMethod {
+  WALLET
+  CARD
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+}
+
+User ||--o{ Order : "1..N (đặt đơn)"
+Order ||--|{ OrderItem : "1..N (gồm các món)"
+Product ||--o{ OrderItem : "1..N (được chọn)"
+Order ||--o{ Payment : "1..N (lịch sử thanh toán)"
+
+Order .right. OrderStatus
+Order .down. Role
+OrderItem .right. Size
+Payment .right. PaymentMethod
+Payment .down. PaymentStatus
+@enduml

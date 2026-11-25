@@ -1,25 +1,35 @@
+// =============================================================================
+// ORDERS SERVICE - NGHIỆP VỤ ĐẶT HÀNG, TỒN KHO & LỊCH SỬ ĐƠN (MVP)
+// =============================================================================
+
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { isUniqueViolation } from '../common/idempotency.js';
-import type { OrderStatus } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
-import { assertTransition, type StaffStep } from './order-status.js';
 import { unitPrice } from './pricing.js';
 import { discountFor } from './promo.js';
 
+// Trường dữ liệu trả về thu gọn cho OrderSummaryDto
 const SUMMARY = { id: true, status: true, total: true, discount: true, promoCode: true } as const;
 
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Tạo đơn hàng mới:
+   * 1. Kiểm tra Idempotency-Key: nếu đã gửi trước đó thì trả lại đơn cũ mà không tạo mới.
+   * 2. Lấy giá sản phẩm từ DB và tính toán đơn giá từng dòng kèm phụ thu size/topping.
+   * 3. Tính mã giảm giá (nếu có) và trừ vào tổng tiền (Subtotal - Discount).
+   * 4. Thực hiện Transaction nguyên tử:
+   *    - Trừ tồn kho có điều kiện (WHERE stock >= quantity). Nếu thiếu hàng -> rollback & 409 Conflict.
+   *    - Tạo bản ghi Order và OrderItem tương ứng.
+   */
   async create(userId: number, dto: CreateOrderDto, idempotencyKey?: string) {
     const findExisting = () =>
       this.prisma.order.findUnique({
@@ -95,6 +105,9 @@ export class OrdersService {
     }
   }
 
+  /**
+   * Lấy lịch sử đơn hàng của một người dùng cụ thể (sắp xếp giảm dần theo thời gian tạo)
+   */
   async findMine(userId: number) {
     const orders = await this.prisma.order.findMany({
       where: { userId },
@@ -103,82 +116,9 @@ export class OrdersService {
     });
     return orders.map(toHistory);
   }
-
-  // Khách hủy đơn chưa thanh toán; kho đã giữ lúc đặt được hoàn lại
-  async cancel(userId: number, orderId: string) {
-    const order = await this.prisma.order.findFirst({
-      where: { id: orderId, userId },
-      include: { items: { select: { productId: true, quantity: true } } },
-    });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
-    assertTransition(order.status, 'CANCELLED');
-
-    await this.prisma.$transaction(async (tx) => {
-      await setStatus(tx, order, 'CANCELLED');
-      for (const i of order.items) {
-        await tx.product.update({
-          where: { id: i.productId },
-          data: { stock: { increment: i.quantity } },
-        });
-      }
-    });
-    return summaryOf(order, 'CANCELLED');
-  }
-
-  // Nhân viên quầy đẩy đơn qua PREPARING → READY → COMPLETED
-  async advance(userId: number, orderId: string, to: StaffStep) {
-    await this.assertStaff(userId);
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng');
-    assertTransition(order.status, to);
-    await setStatus(this.prisma, order, to);
-    return summaryOf(order, to);
-  }
-
-  // Hàng đợi của quầy: đơn đã trả tiền chưa giao, cũ nhất trước
-  async queue(userId: number) {
-    await this.assertStaff(userId);
-    const orders = await this.prisma.order.findMany({
-      where: { status: { in: ['PAID', 'PREPARING', 'READY'] } },
-      orderBy: { createdAt: 'asc' },
-      select: HISTORY,
-    });
-    return orders.map(toHistory);
-  }
-
-  // Đọc role từ DB thay vì từ token để hạ quyền có hiệu lực ngay
-  private async assertStaff(userId: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-    if (user?.role !== 'STAFF') {
-      throw new ForbiddenException('Chỉ nhân viên quầy được thực hiện thao tác này');
-    }
-  }
 }
 
-// Cùng hình dạng với kết quả POST /orders (OrderSummaryDto)
-const summaryOf = (
-  o: { id: string; total: number; discount: number; promoCode: string | null },
-  status: OrderStatus,
-) => ({ id: o.id, status, total: o.total, discount: o.discount, promoCode: o.promoCode });
-
-// Khoá lạc quan: chỉ ghi khi version chưa đổi kể từ lúc đọc, như payments.service.ts
-async function setStatus(
-  tx: Pick<PrismaService, 'order'>,
-  order: { id: string; version: number },
-  status: OrderStatus,
-) {
-  const { count } = await tx.order.updateMany({
-    where: { id: order.id, version: order.version },
-    data: { status, version: { increment: 1 } },
-  });
-  if (count === 0) {
-    throw new ConflictException('Đơn vừa được cập nhật bởi yêu cầu khác, vui lòng thử lại');
-  }
-}
-
+// Cấu trúc chọn trường khi đọc lịch sử đơn hàng
 const HISTORY = {
   ...SUMMARY,
   createdAt: true,
@@ -199,6 +139,7 @@ type HistoryRow = {
   items: { product: { name: string } }[];
 };
 
+// Chuẩn hóa tên sản phẩm phẳng ra ngoài item (productName)
 const toHistory = <T extends HistoryRow>({ items, ...order }: T) => ({
   ...order,
   items: items.map(({ product, ...item }) => ({ ...item, productName: product.name })),

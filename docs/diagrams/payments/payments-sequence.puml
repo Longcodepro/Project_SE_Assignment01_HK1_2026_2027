@@ -1,0 +1,112 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor ":KháchHàng" as User
+participant ":GiaoDiệnThanhToán" as UI <<boundary>>
+participant ":CreatePaymentDto" as DTO <<boundary>>
+participant ":PaymentsController" as Ctrl <<control>>
+participant ":JwtAuthGuard" as Guard <<control>>
+participant ":PaymentsService" as Svc <<control>>
+participant ":MockPaymentGateway" as Mock <<control>>
+database ":Prisma / PostgreSQL" as DB <<entity>>
+
+autonumber 1 "<b>[0]</b>"
+
+User -> UI: chọnPhươngThức(method, cardNumber?)
+User -> UI: bấmNútXácNhậnThanhToán()
+activate UI
+
+UI -> UI: sinhKhóa(Idempotency-Key)
+UI -> Ctrl: gửiYêuCầu(POST /payments, body, headers)
+activate Ctrl
+
+Ctrl -> Guard: canActivate(context)
+activate Guard
+
+alt Token không hợp lệ hoặc thiếu
+  Guard --> Ctrl: throw UnauthorizedException("Thiếu token")
+  Ctrl --> UI: 401 Unauthorized
+  UI --> User: yêuCầuĐăngNhậpLại()
+else Token hợp lệ
+  Guard --> Ctrl: true (gán req.user = { id, email })
+  deactivate Guard
+  
+  Ctrl -> DTO: validate(orderId, method, cardNumber)
+  activate DTO
+  
+  alt Dữ liệu DTO không hợp lệ
+    DTO --> Ctrl: validationErrors
+    Ctrl --> UI: 400 Bad Request
+    UI --> User: hiểnThịLỗiDữLiệu()
+  else Dữ liệu DTO hợp lệ
+    DTO --> Ctrl: createPaymentDto (hợp lệ)
+    deactivate DTO
+    
+    Ctrl -> Svc: pay(userId, dto, idempotencyKey)
+    activate Svc
+    
+    Svc -> DB: findFirst(Order WHERE id = orderId AND userId = userId)
+    activate DB
+    DB --> Svc: kếtQuả (order hoặc null)
+    deactivate DB
+    
+    alt Không tìm thấy đơn hàng của User
+      Svc --> Ctrl: throw NotFoundException("Không tìm thấy đơn hàng")
+      Ctrl --> UI: 404 Not Found
+      UI --> User: báoLỗiKhôngTìmThấyĐơn()
+    else Tìm thấy đơn hàng
+      opt Có gửi kèm Idempotency-Key
+        Svc -> DB: findUnique(Payment WHERE orderId, idempotencyKey)
+        activate DB
+        DB --> Svc: existingPayment (nếu có)
+        deactivate DB
+        
+        break Giao dịch đã được xử lý trước đó (gửi trùng)
+          Svc --> Ctrl: existingPayment
+          Ctrl --> UI: 201 Created (trả lại kết quả thanh toán cũ)
+          UI --> User: hiểnThịKếtQuả(status, amount)
+        end
+      end
+      
+      alt Trạng thái đơn không thể thanh toán (đã PAID hoặc CANCELLED)
+        Svc --> Ctrl: throw ConflictException("Đơn không thể thanh toán")
+        Ctrl --> UI: 409 Conflict
+        UI --> User: thôngBáoĐơnĐãThanhToánHoặcĐãHủy()
+      else Trạng thái đơn hợp lệ (PENDING hoặc PAYMENT_FAILED)
+        Svc -> Mock: charge({ method, amount: order.total, cardNumber })
+        activate Mock
+        Mock --> Svc: result (ok, reason?)
+        deactivate Mock
+        
+        Svc -> DB: $transaction(cập nhật đơn, tích điểm, ghi payment)
+        activate DB
+        
+        alt Thanh toán thất bại (Thẻ đuôi 0000 hoặc Ví > 500k)
+          DB --> Svc: lưuPayment(status: FAILED, reason)
+          Svc --> Ctrl: PaymentResponseDto(status: PAYMENT_FAILED)
+          Ctrl --> UI: 201 Created (status: PAYMENT_FAILED)
+          UI --> User: hiểnThịLỗiThấtBại(reason) & cho phép thanh toán lại
+        else Thanh toán thành công
+          DB --> Svc: cậpNhậtOrder(PAID), cộngĐiểmLoyalty, lưuPayment(SUCCESS)
+          deactivate DB
+          
+          Svc --> Ctrl: PaymentResponseDto(status: PAID, pointsEarned)
+          deactivate Svc
+          
+          Ctrl --> UI: 201 Created { status: PAID, pointsEarned }
+          deactivate Ctrl
+          
+          UI --> User: hiểnThịMànHìnhThànhCông(orderId, pointsEarned)
+          deactivate UI
+        end
+      end
+    end
+  end
+end
+
+@enduml

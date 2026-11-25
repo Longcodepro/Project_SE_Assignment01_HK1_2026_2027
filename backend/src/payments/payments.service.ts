@@ -1,3 +1,7 @@
+// =============================================================================
+// PAYMENTS SERVICE - XỬ LÝ GIAO DỊCH, KHÓA LẠC QUAN & TÍCH ĐIỂM
+// =============================================================================
+
 import {
   ConflictException,
   Injectable,
@@ -20,7 +24,7 @@ type PaymentRow = {
   pointsEarned: number;
 };
 
-// Dạng trả về cho client; lần gửi lại cùng Idempotency-Key cũng đi qua hàm này
+// Chuẩn hóa cấu trúc dữ liệu trả về cho client (PaymentResponseDto)
 const toResponse = (p: PaymentRow) => ({
   paymentId: p.id,
   orderId: p.orderId,
@@ -38,6 +42,18 @@ export class PaymentsService {
     private readonly gateway: MockPaymentGateway,
   ) {}
 
+  /**
+   * Thực hiện thanh toán cho một đơn hàng:
+   * 1. Xác thực quyền sở hữu đơn hàng (không tìm thấy -> 404 để không lộ ID đơn).
+   * 2. Kiểm tra Idempotency-Key: nếu đã thanh toán với key này -> trả ngay kết quả cũ.
+   * 3. Kiểm tra máy trạng thái (FSM): Nếu đơn đã PAID hoặc CANCELLED -> ném lỗi 409 Conflict.
+   * 4. Gọi cổng thanh toán mô phỏng (MockPaymentGateway).
+   * 5. Thực hiện Database Transaction:
+   *    - Cập nhật Order bằng Khóa lạc quan (Optimistic Concurrency Control):
+   *      WHERE id = order.id AND version = order.version, tăng version thêm 1.
+   *    - Nếu thanh toán thành công (PAID): Tích điểm thưởng loyalty cho User (1 điểm / 1.000đ).
+   *    - Lưu bản ghi Payment lịch sử giao dịch.
+   */
   async pay(userId: number, dto: CreatePaymentDto, idempotencyKey?: string) {
     // Đơn của người khác cũng báo 404 để không lộ đơn có tồn tại
     const order = await this.prisma.order.findFirst({
