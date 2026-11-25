@@ -1,0 +1,70 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor ":KháchHàng" as User
+participant ":MànHìnhĐăngNhập" as UI <<boundary>>
+participant ":LoginDto" as DTO <<boundary>>
+participant ":AuthController" as Ctrl <<control>>
+participant ":AuthService" as Svc <<control>>
+participant ":JwtService" as JWT <<control>>
+database ":Prisma / PostgreSQL" as DB <<entity>>
+
+autonumber 1 "<b>[0]</b>"
+
+User -> UI: mởFormĐăngNhập()
+activate UI
+
+User -> UI: nhậpThôngTin(email, password)
+User -> UI: bấmNútĐăngNhập()
+
+UI -> Ctrl: gửiYêuCầu(POST /auth/login, body)
+activate Ctrl
+
+Ctrl -> DTO: validate(email, password)
+activate DTO
+
+alt Dữ liệu không hợp lệ (sai định dạng email hoặc trống)
+  DTO --> Ctrl: validationErrors
+  Ctrl --> UI: 400 Bad Request (Lỗi định dạng DTO)
+  UI --> User: hiểnThịThôngBáoLỗi(Dữ liệu không hợp lệ)
+else Dữ liệu hợp lệ theo DTO
+  DTO --> Ctrl: loginDto (hợp lệ)
+  deactivate DTO
+  
+  Ctrl -> Svc: login(loginDto)
+  activate Svc
+  
+  Svc -> DB: findUnique(where: { email })
+  activate DB
+  DB --> Svc: kếtQuả (user hoặc null)
+  deactivate DB
+  
+  Svc -> Svc: soKhớpMậtKhẩu(password, user?.passwordHash ?? DUMMY_HASH)
+  
+  alt Email không tồn tại hoặc mật khẩu không đúng
+    Svc --> Ctrl: throw UnauthorizedException("Email hoặc mật khẩu không đúng")
+    Ctrl --> UI: 401 Unauthorized (Email hoặc mật khẩu không đúng)
+    UI --> User: hiểnThịThôngBáoLỗi("Email hoặc mật khẩu không đúng")
+  else Email tồn tại và mật khẩu chính xác
+    Svc -> JWT: signAsync({ sub: user.id, email: user.email })
+    activate JWT
+    JWT --> Svc: accessToken
+    deactivate JWT
+    
+    Svc --> Ctrl: { accessToken }
+    deactivate Svc
+    
+    Ctrl --> UI: 200 OK { accessToken }
+    deactivate Ctrl
+    
+    UI -> UI: lưuTokenVàoStorage(accessToken)
+    UI --> User: hiểnThịĐăngNhậpThànhCông()
+    deactivate UI
+  end
+end
+@enduml

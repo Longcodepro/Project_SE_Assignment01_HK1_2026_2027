@@ -1,0 +1,66 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor ":KháchHàng" as User
+participant ":MànHìnhĐăngKý" as UI <<boundary>>
+participant ":RegisterDto" as DTO <<boundary>>
+participant ":AuthController" as Ctrl <<control>>
+participant ":AuthService" as Svc <<control>>
+database ":Prisma / PostgreSQL" as DB <<entity>>
+
+autonumber 1 "<b>[0]</b>"
+
+User -> UI: mởFormĐăngKý()
+activate UI
+
+User -> UI: nhậpThôngTin(email, password, name)
+User -> UI: bấmNútĐăngKý()
+
+UI -> Ctrl: gửiYêuCầu(POST /auth/register, body)
+activate Ctrl
+
+Ctrl -> DTO: validate(email, password, name)
+activate DTO
+
+alt Dữ liệu không hợp lệ (sai định dạng email hoặc mật khẩu < 6 ký tự)
+  DTO --> Ctrl: validationErrors
+  Ctrl --> UI: 400 Bad Request (Lỗi định dạng DTO)
+  UI --> User: hiểnThịThôngBáoLỗi(Dữ liệu không hợp lệ)
+else Dữ liệu hợp lệ theo DTO
+  DTO --> Ctrl: registerDto (hợp lệ)
+  deactivate DTO
+  
+  Ctrl -> Svc: register(registerDto)
+  activate Svc
+  
+  Svc -> Svc: bămMậtKhẩu(password, salt=10)
+  
+  Svc -> DB: create({ email, passwordHash, name })
+  activate DB
+  
+  alt Email đã tồn tại trong CSDL (Lỗi P2002)
+    DB --> Svc: throw PrismaClientKnownRequestError(P2002)
+    Svc --> Ctrl: throw ConflictException("Email đã được đăng ký")
+    Ctrl --> UI: 409 Conflict (Email đã được đăng ký)
+    UI --> User: hiểnThịThôngBáoLỗi("Email đã được đăng ký")
+  else Tạo tài khoản thành công
+    DB --> Svc: userRecord (id, email, name)
+    deactivate DB
+    
+    Svc --> Ctrl: { id, email, name }
+    deactivate Svc
+    
+    Ctrl --> UI: 201 Created { id, email, name }
+    deactivate Ctrl
+    
+    UI -> UI: đóngCửaSổĐăngKý()
+    UI --> User: hiểnThịĐăngKýThànhCông()
+    deactivate UI
+  end
+end
+@enduml

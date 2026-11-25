@@ -1,0 +1,52 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam ranksep 40
+skinparam nodesep 60
+
+|Khách hàng|
+start
+:Mở cửa sổ Đăng nhập;
+:Nhập email và mật khẩu;
+:Bấm nút "Đăng nhập";
+
+|Giao diện Next.js|
+:Gửi yêu cầu HTTP\nPOST /auth/login;
+
+|Backend (NestJS)|
+if (Kiểm tra định dạng (LoginDto)?) then ([sai định dạng])
+  :Báo lỗi 400 Bad Request\n(sai định dạng email hoặc trống);
+  |Giao diện Next.js|
+  :Hiển thị lỗi trên form;
+  |Khách hàng|
+  stop
+else ([hợp lệ])
+  |Cơ sở dữ liệu (PostgreSQL)|
+  :Truy vấn User theo email\n(prisma.user.findUnique);
+  
+  |Backend (NestJS)|
+  :So khớp mật khẩu bằng bcrypt.compare\n(dùng hash giả nếu không tìm thấy user);
+  
+  if (Email tồn tại và mật khẩu chính xác?) then ([sai thông tin])
+    |Backend (NestJS)|
+    :Ném ngoại lệ 401 Unauthorized\n("Email hoặc mật khẩu không đúng");
+    |Giao diện Next.js|
+    :Hiển thị lỗi\n"Email hoặc mật khẩu không đúng";
+    |Khách hàng|
+    stop
+  else ([chính xác])
+    |Backend (NestJS)|
+    :Ký tạo JWT Access Token\n(chứa sub: userId, email);
+    :Trả về mã 200 OK\n(kèm accessToken);
+    |Giao diện Next.js|
+    :Lưu accessToken vào bộ nhớ\nvà đóng cửa sổ Đăng nhập;
+    |Khách hàng|
+    :Chuyển sang trạng thái đã đăng nhập;
+    stop
+  endif
+endif
+@enduml

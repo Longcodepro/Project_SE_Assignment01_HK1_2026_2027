@@ -1,0 +1,48 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam ranksep 35
+skinparam nodesep 50
+
+|Khách hàng|
+start
+:Bấm vào mục "Lịch sử đơn hàng" trên Navbar;
+
+|Giao diện Next.js|
+if (Đã đăng nhập (có token)?) then ([chưa đăng nhập])
+  :Hiển thị thông báo yêu cầu đăng nhập\nkèm nút mở cửa sổ Đăng nhập;
+  |Khách hàng|
+  stop
+else ([đã đăng nhập])
+  |Giao diện Next.js|
+  :Gửi yêu cầu HTTP GET /orders/me\n(kèm Header Authorization: Bearer <token>);
+  
+  |Backend (NestJS)|
+  if (Xác thực JWT Token qua JwtAuthGuard?) then ([token không hợp lệ])
+    :Trả về mã lỗi 401 Unauthorized;
+    |Giao diện Next.js|
+    :Yêu cầu khách đăng nhập lại;
+    |Khách hàng|
+    stop
+  else ([token hợp lệ])
+    :Trích xuất userId từ token;
+    
+    |Cơ sở dữ liệu (PostgreSQL)|
+    :Truy vấn các đơn hàng của user:\n- WHERE userId = userId\n- ORDER BY createdAt DESC (mới nhất lên đầu)\n- JOIN OrderItem & Product lấy chi tiết món;
+    
+    |Backend (NestJS)|
+    :Chuẩn hóa danh sách sang OrderHistoryDto[];\n:Trả về mã 200 OK kèm danh sách đơn hàng;
+    
+    |Giao diện Next.js|
+    :Render danh sách đơn hàng lên màn hình:\n- Mã đơn, ngày giờ đặt, tổng thanh toán\n- Badge trạng thái (PENDING, PAID, READY...)\n- Chi tiết từng ly nước (size, topping, đơn giá);
+    
+    |Khách hàng|
+    :Xem lịch sử mua hàng và theo dõi tiến độ món;
+    stop
+  endif
+endif
+@enduml

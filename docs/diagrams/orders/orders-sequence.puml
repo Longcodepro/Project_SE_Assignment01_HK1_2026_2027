@@ -1,0 +1,103 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor ":KháchHàng" as User
+participant ":GiaoDiệnĐặtHàng" as UI <<boundary>>
+participant ":CreateOrderDto" as DTO <<boundary>>
+participant ":OrdersController" as Ctrl <<control>>
+participant ":JwtAuthGuard" as Guard <<control>>
+participant ":OrdersService" as Svc <<control>>
+database ":Prisma / PostgreSQL" as DB <<entity>>
+
+autonumber 1 "<b>[0]</b>"
+
+User -> UI: bấmNútXácNhậnĐặtĐơn(items, promoCode)
+activate UI
+
+UI -> UI: sinhKhóa(Idempotency-Key)
+UI -> Ctrl: gửiYêuCầu(POST /orders, body, headers)
+activate Ctrl
+
+Ctrl -> Guard: canActivate(context)
+activate Guard
+
+alt Token không hợp lệ hoặc thiếu
+  Guard --> Ctrl: throw UnauthorizedException("Thiếu token đăng nhập")
+  Ctrl --> UI: 401 Unauthorized
+  UI --> User: yêuCầuĐăngNhậpLại()
+else Token hợp lệ
+  Guard --> Ctrl: true (gán req.user = { id, email })
+  deactivate Guard
+  
+  Ctrl -> DTO: validate(items, promoCode)
+  activate DTO
+  
+  alt Dữ liệu DTO không hợp lệ (giỏ hàng rỗng hoặc sai cú pháp)
+    DTO --> Ctrl: validationErrors
+    Ctrl --> UI: 400 Bad Request (Lỗi dữ liệu DTO)
+    UI --> User: hiểnThịLỗiDữLiệu()
+  else Dữ liệu DTO hợp lệ
+    DTO --> Ctrl: createOrderDto (hợp lệ)
+    deactivate DTO
+    
+    Ctrl -> Svc: create(userId, dto, idempotencyKey)
+    activate Svc
+    
+    opt Có gửi kèm Idempotency-Key
+      Svc -> DB: findUnique(userId, idempotencyKey)
+      activate DB
+      DB --> Svc: kếtQuả (existingOrder hoặc null)
+      deactivate DB
+      
+      break Đơn đã tồn tại từ trước (gửi trùng key)
+        Svc --> Ctrl: existingOrder (trả lại đơn cũ)
+        Ctrl --> UI: 201 Created (trả lại thông tin đơn cũ)
+        UI --> User: chuyểnSangMànHìnhThanhToán(orderId, total)
+      end
+    end
+    
+    Svc -> DB: findMany(products WHERE id IN items.productIds)
+    activate DB
+    DB --> Svc: productsInDb
+    deactivate DB
+    
+    alt Có sản phẩm không tồn tại trong CSDL
+      Svc --> Ctrl: throw BadRequestException("Sản phẩm không tồn tại")
+      Ctrl --> UI: 400 Bad Request
+      UI --> User: hiểnThịLỗi("Sản phẩm không tồn tại")
+    else Sản phẩm hợp lệ
+      Svc -> Svc: tínhĐơnGiá(basePrice, size, toppings)
+      Svc -> Svc: tínhTổngTiềnVàGiảmGiá(items, promoCode)
+      
+      Svc -> DB: $transaction(trừKho & tạoĐơn)
+      activate DB
+      
+      alt Sản phẩm không đủ tồn kho (stock < quantity)
+        DB --> Svc: rollback & count == 0
+        Svc --> Ctrl: throw ConflictException("Sản phẩm không đủ hàng")
+        Ctrl --> UI: 409 Conflict (Không đủ hàng)
+        UI --> User: thôngBáoMónĐãHếtHàng()
+      else Đủ tồn kho và tạo đơn thành công
+        DB --> Svc: orderRecord (id: ord_xxx, status: PENDING, total)
+        deactivate DB
+        
+        Svc --> Ctrl: OrderSummaryDto
+        deactivate Svc
+        
+        Ctrl --> UI: 201 Created { id, status: PENDING, total, discount }
+        deactivate Ctrl
+        
+        UI -> UI: xóaGiỏHàng()
+        UI --> User: chuyểnSangMànHìnhThanhToán(orderId, total)
+        deactivate UI
+      end
+    end
+  end
+end
+
+@enduml

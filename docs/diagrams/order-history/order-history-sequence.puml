@@ -1,0 +1,65 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor ":KháchHàng" as User
+participant ":TrangLịchSửĐơn" as UI <<boundary>>
+participant ":OrdersController" as Ctrl <<control>>
+participant ":JwtAuthGuard" as Guard <<control>>
+participant ":OrdersService" as Svc <<control>>
+database ":Prisma / PostgreSQL" as DB <<entity>>
+
+autonumber 1 "<b>[0]</b>"
+
+User -> UI: bấmVàoLịchSửĐơnHàng()
+activate UI
+
+alt Khách hàng chưa đăng nhập (không có token trong AuthStore)
+  UI --> User: hiểnThịYêuCầuĐăngNhập()
+else Khách hàng đã đăng nhập (có token)
+  UI -> UI: bậtTrạngTháiLoading()
+  UI -> Ctrl: gửiYêuCầu(GET /orders/me, Header: Bearer <token>)
+  activate Ctrl
+  
+  Ctrl -> Guard: canActivate(context)
+  activate Guard
+  
+  alt Token không hợp lệ hoặc hết hạn
+    Guard --> Ctrl: throw UnauthorizedException("Token không hợp lệ")
+    Ctrl --> UI: 401 Unauthorized
+    UI --> User: yêuCầuĐăngNhậpLại()
+  else Token hợp lệ
+    Guard --> Ctrl: true (gán req.user = { id, email })
+    deactivate Guard
+    
+    Ctrl -> Svc: findMine(userId)
+    activate Svc
+    
+    Svc -> DB: findMany(Order WHERE userId = userId, ORDER BY createdAt DESC, include items)
+    activate DB
+    DB --> Svc: danhSáchĐơnHàng (kèm OrderItem & Product)
+    deactivate DB
+    
+    Svc -> Svc: chuẩnHóaDữLiệu(toHistory -> OrderHistoryDto[])
+    Svc --> Ctrl: OrderHistoryDto[]
+    deactivate Svc
+    
+    Ctrl --> UI: 200 OK (OrderHistoryDto[])
+    deactivate Ctrl
+    
+    UI -> UI: tắtTrạngTháiLoading()
+    
+    alt Người dùng chưa từng đặt đơn (danh sách rỗng)
+      UI --> User: hiểnThịThôngBáoChưaCóĐơn()
+    else Có đơn hàng
+      UI --> User: hiểnThịDanhSáchĐơn(mãĐơn, ngàyĐặt, trạngThái, chiTiếtMón, tổngTiền)
+      deactivate UI
+    end
+  end
+end
+
+@enduml

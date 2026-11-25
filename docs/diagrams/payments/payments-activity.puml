@@ -1,0 +1,96 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam ranksep 35
+skinparam nodesep 50
+
+|Khách hàng|
+start
+:Mở màn hình Thanh toán;
+:Chọn phương thức (Ví hoặc Thẻ);
+:Nhập thông tin thẻ (nếu chọn Thẻ);
+:Bấm nút "Xác nhận thanh toán";
+
+|Giao diện Next.js|
+:Sinh khóa chống gửi trùng Idempotency-Key;
+:Gửi yêu cầu HTTP POST /payments\n(kèm Bearer Token, orderId, method, cardNumber);
+
+|Backend (NestJS)|
+if (Xác thực JWT Token?) then ([không hợp lệ])
+  :Báo lỗi 401 Unauthorized;
+  |Giao diện Next.js|
+  :Yêu cầu khách đăng nhập lại;
+  |Khách hàng|
+  stop
+endif
+
+|Backend (NestJS)|
+if (Kiểm tra dữ liệu CreatePaymentDto?) then ([sai định dạng])
+  :Báo lỗi 400 Bad Request\n(sai phương thức hoặc số thẻ);
+  |Giao diện Next.js|
+  :Hiển thị lỗi thông tin thanh toán;
+  |Khách hàng|
+  stop
+endif
+
+|Cơ sở dữ liệu (PostgreSQL)|
+:Tìm đơn hàng theo orderId và userId;
+
+|Backend (NestJS)|
+if (Đơn hàng tồn tại và thuộc về User?) then ([không tìm thấy])
+  :Báo lỗi 404 Not Found;
+  |Giao diện Next.js|
+  :Thông báo không tìm thấy đơn;
+  |Khách hàng|
+  stop
+endif
+
+|Cơ sở dữ liệu (PostgreSQL)|
+:Kiểm tra Idempotency-Key trong bảng Payment;
+
+|Backend (NestJS)|
+if (Đã từng xử lý thanh toán với cùng Key?) then ([đã có])
+  :Trả về ngay kết quả giao dịch cũ\n(chống trừ tiền lần 2);
+  |Giao diện Next.js|
+  :Hiển thị kết quả thanh toán cũ;
+  |Khách hàng|
+  stop
+endif
+
+|Backend (NestJS)|
+if (Trạng thái đơn có thể thanh toán?) then ([đã PAID / CANCELLED])
+  :Ném lỗi 409 Conflict\n("Đơn không thể thanh toán tiếp");
+  |Giao diện Next.js|
+  :Báo lỗi trạng thái đơn không hợp lệ;
+  |Khách hàng|
+  stop
+endif
+
+|Backend (NestJS)|
+:Gửi yêu cầu trừ tiền qua MockPaymentGateway;
+
+if (Cổng chấp nhận thanh toán?) then ([bị từ chối])
+  |Cơ sở dữ liệu (PostgreSQL)|
+  :Ghi nhận giao dịch thất bại vào bảng Payment\nvà cập nhật trạng thái đơn PAYMENT_FAILED;
+  |Backend (NestJS)|
+  :Trả về mã 201 Created\n(status: PAYMENT_FAILED);
+  |Giao diện Next.js|
+  :Báo lỗi (Thẻ đuôi 0000 hoặc Ví > 500k);\n:Cho phép chọn phương thức khác thử lại;
+  |Khách hàng|
+  stop
+else ([thành công])
+  |Cơ sở dữ liệu (PostgreSQL)|
+  :Transaction nguyên tử:\n1. Khóa lạc quan (version + 1, status: PAID)\n2. Tích điểm thưởng Loyalty (1 điểm / 1.000đ)\n3. Lưu hóa đơn vào bảng Payment (status: SUCCESS);
+  |Backend (NestJS)|
+  :Trả về mã 201 Created\n(kèm trạng thái PAID và điểm thưởng);
+  |Giao diện Next.js|
+  :Chuyển sang màn hình Xác nhận thành công;
+  |Khách hàng|
+  :Xem hóa đơn và điểm tích lũy;
+  stop
+endif
+@enduml

@@ -1,0 +1,56 @@
+@startuml
+skinparam style strictuml
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam monochrome true
+skinparam shadowing false
+skinparam conditionStyle diamond
+skinparam ranksep 35
+skinparam nodesep 50
+
+|Khách hàng|
+start
+:Truy cập trang Menu;
+
+|Giao diện Next.js|
+:Hiển thị trạng thái tải (Loading);
+:Gửi yêu cầu HTTP\nGET /products;
+
+|Backend (NestJS)|
+:Tiếp nhận yêu cầu tại ProductsController;
+:Gọi ProductsService.findAll();
+
+|Cơ sở dữ liệu (PostgreSQL)|
+:Truy vấn danh sách món\n(prisma.product.findMany, order by id asc);
+
+|Backend (NestJS)|
+:Trả về mã 200 OK\nkèm danh sách ProductDto[];
+
+|Giao diện Next.js|
+:Ẩn loading và hiển thị Menu đồ uống;
+
+|Khách hàng|
+:Xem danh mục món (Cà phê, Trà, Đá xay);
+:Bấm chọn món đồ uống muốn đặt;
+
+|Giao diện Next.js|
+:Mở cửa sổ chi tiết món (ProductDetailModal);
+
+|Khách hàng|
+:Chọn kích cỡ (Size S / M / L);
+:Chọn thêm Topping (trân châu, kem cheese, thạch);
+
+|Giao diện Next.js|
+:Tự động tính lại tổng tiền tạm tính\n(giá món + phụ thu size + giá topping);
+
+|Khách hàng|
+:Bấm nút "Thêm vào giỏ hàng";
+
+|Giao diện Next.js|
+:Lưu món vào giỏ hàng (Zustand Cart Store);
+:Đóng cửa sổ chi tiết món;
+
+|Khách hàng|
+:Thấy số lượng giỏ hàng được cập nhật;
+stop
+@enduml
